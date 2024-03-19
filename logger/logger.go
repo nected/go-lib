@@ -2,34 +2,31 @@ package logger
 
 import (
 	"fmt"
-	"sync"
 
 	"go.uber.org/zap"
 )
 
 type Logger struct {
 	log           *zap.Logger
-	mu            sync.Mutex
 	sentryEnabled bool
 	sentryDSN     string
 	logSentry     bool
 }
 
-var logger *Logger
-
 func NewLogger() *Logger {
-	if logger == nil {
-		logger.mu.Lock()
-		defer logger.mu.Unlock()
-		l, err := zap.NewProduction()
-		if err != nil {
-			fmt.Printf("failed to initialize zap logger: %v", err)
-		}
-		logger = &Logger{
-			log: l,
-		}
+	l, err := zap.NewProduction()
+	if err != nil {
+		fmt.Printf("failed to initialize zap logger: %v", err)
 	}
-	return logger
+	return &Logger{log: l}
+}
+
+func NewNamedLogger(name string) *Logger {
+	l, err := zap.NewProduction()
+	if err != nil {
+		fmt.Printf("failed to initialize zap logger: %v", err)
+	}
+	return &Logger{log: l.Named(name)}
 }
 
 // info log
