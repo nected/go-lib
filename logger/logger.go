@@ -31,30 +31,34 @@ func NewNamedLogger(name string) *Logger {
 
 // info log
 func (l *Logger) Info(code string, msg string, fields ...zap.Field) {
-	l.log.Info(msg, fields...)
+	l.log.Info(msg, getZapFields(code, fields...)...)
 }
 
 // error log
 func (l *Logger) Error(code string, msg string, fields ...zap.Field) {
-	l.log.Error(msg, fields...)
+	l.log.Error(msg, getZapFields(code, fields...)...)
 }
 
 // warn log
 func (l *Logger) Warn(code string, msg string, fields ...zap.Field) {
-	l.log.Warn(msg, fields...)
+	l.log.Warn(msg, getZapFields(code, fields...)...)
 }
 
 // debug log
 func (l *Logger) Debug(code string, msg string, fields ...zap.Field) {
-	l.log.Debug(msg, fields...)
+	l.log.Debug(msg, getZapFields(code, fields...)...)
 }
 
 // fatal log
 func (l *Logger) Fatal(code string, msg string, fields ...zap.Field) {
-	l.log.Fatal(msg, fields...)
+	l.log.Fatal(msg, getZapFields(code, fields...)...)
 }
 
 // panic log
 func (l *Logger) Panic(code string, msg string, fields ...zap.Field) {
-	l.log.Panic(msg, fields...)
+	l.log.Panic(msg, getZapFields(code, fields...)...)
+}
+
+func getZapFields(code string, fields ...zap.Field) []zap.Field {
+	return append(fields, zap.String("code", code))
 }
