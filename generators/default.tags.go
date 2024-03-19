@@ -7,17 +7,19 @@ import (
 
 type DefaultTag struct{}
 
+var tagName = "default"
+
 func (t *DefaultTag) GenerateDefaults() {
 	val := reflect.ValueOf(t).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		if field.Kind() == reflect.String {
-			if tag := val.Type().Field(i).Tag.Get("default"); tag != "" {
+			if tag := val.Type().Field(i).Tag.Get(tagName); tag != "" {
 				field.SetString(tag)
 			}
 		}
 		if field.Kind() == reflect.Int {
-			if tag := val.Type().Field(i).Tag.Get("default"); tag != "" {
+			if tag := val.Type().Field(i).Tag.Get(tagName); tag != "" {
 				v, _ := strconv.ParseInt(tag, 10, 64)
 				field.SetInt(v)
 			}
@@ -35,12 +37,12 @@ func processStruct(field reflect.Value) {
 			processStruct(field.Field(i))
 		}
 		if field.Field(i).Kind() == reflect.String {
-			if tag := field.Type().Field(i).Tag.Get("default"); tag != "" {
+			if tag := field.Type().Field(i).Tag.Get(tagName); tag != "" {
 				field.Field(i).SetString(tag)
 			}
 		}
 		if field.Field(i).Kind() == reflect.Int {
-			if tag := field.Type().Field(i).Tag.Get("default"); tag != "" {
+			if tag := field.Type().Field(i).Tag.Get(tagName); tag != "" {
 				v, _ := strconv.ParseInt(tag, 10, 64)
 				field.Field(i).SetInt(v)
 			}
