@@ -5,11 +5,9 @@ import (
 	"strconv"
 )
 
-type DefaultTag struct{}
-
 var tagName = "default"
 
-func (t *DefaultTag) GenerateDefaults() {
+func GenerateDefaults(t interface{}) {
 	val := reflect.ValueOf(t).Elem()
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
