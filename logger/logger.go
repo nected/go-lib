@@ -14,7 +14,11 @@ type Logger struct {
 }
 
 func NewLogger() *Logger {
-	l, err := zap.NewProduction(zap.WithCaller(true))
+	options := []zap.Option{
+		zap.AddCaller(),
+		zap.AddCallerSkip(5),
+	}
+	l, err := zap.NewProduction(options...)
 	if err != nil {
 		fmt.Printf("failed to initialize zap logger: %v", err)
 	}
