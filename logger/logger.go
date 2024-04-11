@@ -124,7 +124,7 @@ func getZapFields(args ...interface{}) (fields []zapcore.Field) {
 		fields = append(fields, zap.Any(key.(string), value))
 	}
 
-	if len(fields)*2 < len(args) {
+	if (len(fields)*2 + len(errors)) < len(args) {
 		// check if value is of type error
 		if err, ok := args[len(args)-1].(error); ok {
 			fError = err
@@ -143,7 +143,7 @@ func modifyToSentryLogger(log *zap.Logger, client *sentry.Client) *zap.Logger {
 	core, err := zapsentry.NewCore(cfg, zapsentry.NewSentryClientFromClient(client))
 	// don't use value if error was returned. Noop core will be replaced to nil soon.
 	if err != nil {
-		panic(err)
+		core = zapcore.NewNopCore()
 	}
 
 	log = zapsentry.AttachCoreToLogger(core, log)

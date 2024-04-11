@@ -1,3 +1,4 @@
+// WIP: This file is a work in progress and is not yet functional.
 package utils
 
 // StringInSlice checks if a string is present in a slice of strings.
