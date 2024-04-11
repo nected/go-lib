@@ -130,7 +130,12 @@ func getZapFields(args ...interface{}) (fields []zapcore.Field) {
 			fError = err
 		}
 	}
-	fields = append(fields, zap.Errors("errors", errors), zap.Error(fError))
+	if len(errors) > 0 {
+		fields = append(fields, zap.Errors("errors", errors))
+	}
+	if fError != nil {
+		fields = append(fields, zap.Error(fError))
+	}
 	return fields
 }
 
