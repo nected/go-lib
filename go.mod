@@ -1,6 +1,6 @@
 module github.com/nected/go-lib
 
-go 1.22.0
+go 1.19
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.20.2
