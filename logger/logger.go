@@ -116,12 +116,16 @@ func getZapFields(args ...interface{}) (fields []zapcore.Field) {
 		}
 		key := args[i]
 		value := args[i+1]
-		// check if value is of type error
+
+		keyStr, ok := key.(string)
+		if !ok {
+			keyStr = fmt.Sprintf("%v", key)
+		}
 		if err, ok := value.(error); ok {
 			errors = append(errors, err)
 			continue
 		}
-		fields = append(fields, zap.Any(key.(string), value))
+		fields = append(fields, zap.Any(keyStr, value))
 	}
 
 	if (len(fields)*2 + len(errors)) < len(args) {
