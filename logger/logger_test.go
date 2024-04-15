@@ -2,13 +2,20 @@ package logger
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 func TestGetZapFields(t *testing.T) {
+	type abcd struct {
+		a string
+	}
+
+	a := abcd{a: "a"}
 	tests := []struct {
 		name   string
 		args   []interface{}
@@ -17,12 +24,12 @@ func TestGetZapFields(t *testing.T) {
 		{
 			name: "TestGetZapFields - No errors",
 			args: []interface{}{
-				"key1", "value1",
+				a, "value1",
 				"key2", "value2",
 				"key3", "value3",
 			},
 			fields: []zapcore.Field{
-				zap.Any("key1", "value1"),
+				zap.Any("{a}", "value1"),
 				zap.Any("key2", "value2"),
 				zap.Any("key3", "value3"),
 			},
@@ -40,8 +47,8 @@ func TestGetZapFields(t *testing.T) {
 				zap.Any("key1", "value1"),
 				zap.Any("key2", "value2"),
 				zap.Any("key3", "value3"),
-				zap.Errors("errors", []error{errors.New("error1"), errors.New("error2")}),
-				zap.Error(nil),
+				zap.Errors("errors", []error{errors.New("error1")}),
+				zap.Error(errors.New("error2")),
 			},
 		},
 		{
@@ -82,7 +89,14 @@ func TestGetZapFields(t *testing.T) {
 						t.Errorf("getZapFields() returned field with value %s, want %s", got[i].String, tt.fields[i].String)
 					}
 				case zapcore.ErrorType:
-					if got[i].Interface != tt.fields[i].Interface {
+					assert.Equal(t, got[i].Interface, tt.fields[i].Interface)
+					// if got[i].Interface != tt.fields[i].Interface {
+					// 	t.Errorf("getZapFields() returned field with value %v, want %v", got[i].Interface, tt.fields[i].Interface)
+					// }
+				case zapcore.ArrayMarshalerType:
+					g := fmt.Sprintf("%v", got[i].Interface)
+					in := fmt.Sprintf("%v", tt.fields[i].Interface)
+					if g != in {
 						t.Errorf("getZapFields() returned field with value %v, want %v", got[i].Interface, tt.fields[i].Interface)
 					}
 				default:

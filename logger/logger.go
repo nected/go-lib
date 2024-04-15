@@ -116,15 +116,13 @@ func getZapFields(args ...interface{}) (fields []zapcore.Field) {
 		}
 		key := args[i]
 		value := args[i+1]
+		keyStr := fmt.Sprintf("%v", key)
 
-		keyStr, ok := key.(string)
-		if !ok {
-			keyStr = fmt.Sprintf("%v", key)
-		}
 		if err, ok := value.(error); ok {
 			errors = append(errors, err)
 			continue
 		}
+
 		fields = append(fields, zap.Any(keyStr, value))
 	}
 
