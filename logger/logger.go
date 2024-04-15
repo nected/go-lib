@@ -70,6 +70,9 @@ func (l *Logger) AddCallerSkip(skip int) *Logger {
 }
 
 func (l *Logger) WithSentry(client *sentry.Client) *Logger {
+	if client == nil {
+		return l
+	}
 	l.sentryEnabled = true
 	l.logSentry = true
 	l.log = modifyToSentryLogger(l.log, client)
