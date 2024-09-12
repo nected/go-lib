@@ -110,37 +110,29 @@ func (l *Logger) Panic(msg string, args ...interface{}) {
 }
 
 func getZapFields(args ...interface{}) (fields []zapcore.Field) {
-	var fError error
 	fields = make([]zap.Field, 0)
 	errors := make([]error, 0)
-	for i := 0; i < len(args); i += 2 {
-		if i+1 >= len(args) {
-			break
-		}
+	for i := 0; i < len(args); i++ {
 		key := args[i]
-		value := args[i+1]
-		keyStr := fmt.Sprintf("%v", key)
-
-		if err, ok := value.(error); ok {
+		if err, ok := key.(error); ok {
 			errors = append(errors, err)
 			continue
 		}
+		if i+1 >= len(args) {
+			break
+		}
+		value := args[i+1]
+		keyStr := fmt.Sprintf("%v", key)
 
 		fields = append(fields, zap.Any(keyStr, value))
+		i++
 	}
 
-	if (len(fields)*2 + len(errors)) < len(args) {
-		// check if value is of type error
-		if err, ok := args[len(args)-1].(error); ok {
-			fError = err
-		}
-	}
 	if len(errors) > 0 {
+		fields = append(fields, zap.Error(errors[0]))
 		fields = append(fields, zap.Errors("errors", errors))
 	}
-	if fError != nil {
-		fields = append(fields, zap.Error(fError))
-	}
+
 	return fields
 }
 

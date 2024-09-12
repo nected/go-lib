@@ -42,13 +42,16 @@ func TestGetZapFields(t *testing.T) {
 				"key3", "value3",
 				errors.New("error1"),
 				errors.New("error2"),
+				"key4", "value4",
+				"key5",
 			},
 			fields: []zapcore.Field{
 				zap.Any("key1", "value1"),
 				zap.Any("key2", "value2"),
 				zap.Any("key3", "value3"),
-				zap.Errors("errors", []error{errors.New("error1")}),
-				zap.Error(errors.New("error2")),
+				zap.Any("key4", "value4"),
+				zap.Error(errors.New("error1")),
+				zap.Errors("errors", []error{errors.New("error1"), errors.New("error2")}),
 			},
 		},
 		{
@@ -63,8 +66,8 @@ func TestGetZapFields(t *testing.T) {
 				zap.Any("key1", "value1"),
 				zap.Any("key2", "value2"),
 				zap.Any("key3", "value3"),
-				zap.Errors("errors", []error{errors.New("error1")}),
 				zap.Error(errors.New("error1")),
+				zap.Errors("errors", []error{errors.New("error1")}),
 			},
 		},
 	}
