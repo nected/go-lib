@@ -3,16 +3,17 @@ package rsa
 import (
 	"fmt"
 
-	"github.com/nected/go-lib/crypto"
 	"github.com/nected/go-lib/crypto/base64"
+	"github.com/nected/go-lib/crypto/models"
 )
 
-func EncryptRSA(keyName string, data []byte) (*crypto.Payload, error) {
-	keyInfo := crypto.GetEncryptionKey(keyName)
+func Encrypt(keyName string, data []byte) (*models.Payload, error) {
+	keyInfo := models.GetEncryptionKey(keyName)
 	if keyInfo == nil {
 		// if key not found return stringfied data
-		return &crypto.Payload{
-			Data: string(data),
+		return &models.Payload{
+			Data:          string(data),
+			EncryptedData: string(data),
 		}, nil
 	}
 
@@ -23,17 +24,17 @@ func EncryptRSA(keyName string, data []byte) (*crypto.Payload, error) {
 
 	encryptedDataString := base64.B64Encode(encryptedData)
 
-	return &crypto.Payload{
+	return &models.Payload{
 		KeyName:       keyName,
 		KeyVersion:    keyInfo.GetVersion(),
-		KeyType:       crypto.KeyTypeRSA,
+		KeyType:       models.KeyTypeRSA,
 		Data:          string(data),
 		EncryptedData: encryptedDataString,
 	}, nil
 }
 
-func DecryptRSA(data string) (*crypto.Payload, error) {
-	p := crypto.Payload{}
+func Decrypt(data string) (*models.Payload, error) {
+	p := models.Payload{}
 	if data == "" {
 		return nil, nil
 	}
@@ -46,7 +47,7 @@ func DecryptRSA(data string) (*crypto.Payload, error) {
 
 	// if data is not encrypted return as is
 	if decodedData[0] != '$' {
-		p.Data = decodedData
+		p.Data = data
 		return &p, nil
 	}
 
@@ -55,7 +56,7 @@ func DecryptRSA(data string) (*crypto.Payload, error) {
 
 	keyName, keyVersion, encryptedData := parseData(decodedData)
 
-	keyInfo := crypto.GetEncryptionKey(keyName)
+	keyInfo := models.GetEncryptionKey(keyName)
 
 	if keyInfo == nil {
 		return nil, fmt.Errorf("key %s not found", keyName)
@@ -72,7 +73,7 @@ func DecryptRSA(data string) (*crypto.Payload, error) {
 		return nil, err
 	}
 
-	return &crypto.Payload{
+	return &models.Payload{
 		KeyName:       keyName,
 		KeyVersion:    keyVersion,
 		Data:          string(decryptedData),

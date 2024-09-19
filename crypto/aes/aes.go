@@ -5,11 +5,11 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 
-	"github.com/nected/go-lib/crypto"
 	"github.com/nected/go-lib/crypto/base64"
+	"github.com/nected/go-lib/crypto/models"
 )
 
-func EncryptAES(secret string, data []byte) (*crypto.Payload, error) {
+func Encrypt(secret string, data []byte) (*models.Payload, error) {
 	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
 		return nil, err
@@ -32,15 +32,15 @@ func EncryptAES(secret string, data []byte) (*crypto.Payload, error) {
 
 	encryptedDataString := base64.B64Encode(encryptedData)
 
-	return &crypto.Payload{
-		KeyType:       crypto.KeyTypeAES,
+	return &models.Payload{
+		KeyType:       models.KeyTypeAES,
 		Data:          string(data),
 		EncryptedData: encryptedDataString,
 	}, nil
 }
 
-func DecryptAES(secret string, data string) (*crypto.Payload, error) {
-	p := crypto.Payload{}
+func Decrypt(secret string, data string) (*models.Payload, error) {
+	p := models.Payload{}
 	if data == "" {
 		return nil, nil
 	}

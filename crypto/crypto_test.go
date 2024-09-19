@@ -1,24 +1,53 @@
 package crypto
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/nected/go-lib/crypto/common"
+	"github.com/nected/go-lib/crypto/models"
 )
 
+func generatePrivateKey() string {
+	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		fmt.Printf("Cannot generate RSA key\n")
+		os.Exit(1)
+	}
+
+	// encode private key to PEM format
+	privatekeyBytes, err := x509.MarshalPKCS8PrivateKey(privatekey)
+	if err != nil {
+		fmt.Printf("Cannot marshal private key to bytes\n")
+		return ""
+	}
+
+	privateKeyBlock := &pem.Block{
+		Type:  PRIV_KEY_TYPE,
+		Bytes: privatekeyBytes,
+	}
+
+	privKey := pem.EncodeToMemory(privateKeyBlock)
+
+	return string(privKey)
+}
+
 func setupSuite(t *testing.T) func(t *testing.T) {
-	var privateKey = "-----BEGIN PRIVATE KEY-----\nMIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA1M+jjOGBlvxTfvQy\n9j+e7fW+viOqVFY7vTBjcllrPWxqpAhA4zGGEbCzEK90CKbNAXNMtxnKuqS5f5Sm\nKkesAQIDAQABAkEAqUXUAL5q1s80FvplAuxOHVdodlNmK5lAAVdY8t7fZ0W/ElhU\nRTQh0V2ZWFNMwkaBTxtWb/V2+Z3iuOcnjgUXAQIhAO5tkgpnPnHJ/m47F59ewZM0\nZZAYJfrv2+jTeROLrA6xAiEA5H7AyWGSNjO7RaAYdhtB16YbancRC+uz7Wv1Ea7k\n5lECIQC1RTS9GBWPqYT5BZBGKGJ/qlx1Gwb1K5tD/lOVGqGrYQIgf1dUweaqwaJb\nABaVC11teG2OYesxiN83S14bGlvKHcECIAXBMEUREDAEqOFrBFR3zi/m71in18d+\n5Gv+J6YWHl1B\n-----END PRIVATE KEY-----"
+	var privateKey = generatePrivateKey()
 	os.Setenv("KEY_TESTKEY_1_0", privateKey)
 	os.Setenv("KEY_TESTKEYR_1_1726147578", privateKey)
-	os.Setenv("KEY_TESTKEYA_1_0", "lkajds")
+	os.Setenv("KEY_TESTKEYINVALID_1_0", "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
 		defer os.Unsetenv("KEY_TESTKEY_1_0")
 		defer os.Unsetenv("KEY_TESTKEYR_1_1726147578")
-		defer os.Unsetenv("KEY_TESTKEYA_1_0")
+		defer os.Unsetenv("KEY_TESTKEYINVALID_1_0")
 		t.Log("teardown suite")
 	}
 }
@@ -81,10 +110,10 @@ func TestLoadKeysFromEnv(t *testing.T) {
 				t.Errorf("LoadKeysFromEnv() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			info := getEncryptInfo()
+			info := models.GetEncryptInfo()
 			if info == nil {
-				t.Errorf("GetEncryptInfo() = %v, want %v", info, &EncryptStruct{
-					AvailableKeys: make(map[string]map[string]common.KeyInfo),
+				t.Errorf("GetEncryptInfo() = %v, want %v", info, &models.EncryptStruct{
+					AvailableKeys: make(map[string]map[string]models.KeyInfo),
 				})
 				return
 			}
@@ -163,14 +192,14 @@ func TestGetEncryptionKey(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *common.KeyInfo
+		want *models.KeyInfo
 	}{
 		{
 			name: "TestGetEncryptionKey - No errors",
 			args: args{
 				keyName: "TESTKEY",
 			},
-			want: &common.KeyInfo{
+			want: &models.KeyInfo{
 				PrivKey:   nil,
 				PubKey:    nil,
 				Name:      "TESTKEY",
@@ -182,7 +211,7 @@ func TestGetEncryptionKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetEncryptionKey(tt.args.keyName); got != nil {
+			if got := models.GetEncryptionKey(tt.args.keyName); got != nil {
 				if got.GetName() != tt.want.GetName() {
 					t.Errorf("GetName() = %v, want %v", got.GetName(), tt.want.GetName())
 				}
@@ -197,6 +226,161 @@ func TestGetEncryptionKey(t *testing.T) {
 
 				if got.GetPubKey() == nil {
 					t.Errorf("GetPubKey() = %v, want not nil", got.GetPubKey())
+				}
+			}
+		})
+	}
+}
+
+func TestEncryptRSA(t *testing.T) {
+	teardownSuite := setupSuite(t)
+	LoadKeysFromEnv()
+	defer teardownSuite(t)
+	type args struct {
+		keyName string
+		data    []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *models.Payload
+		wantErr bool
+	}{
+		{
+			name: "TestEncryptRSA - No errors",
+			args: args{
+				keyName: "TESTKEY",
+				data:    []byte("data"),
+			},
+			want: &models.Payload{
+				Data:          "data",
+				EncryptedData: "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
+			},
+			wantErr: false,
+		},
+		{
+			name: "TestEncryptRSA - No errors",
+			args: args{
+				keyName: "TESTKEYR",
+				data:    []byte("data"),
+			},
+			want: &models.Payload{
+				Data:          "data",
+				EncryptedData: "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
+			},
+			wantErr: false,
+		},
+		{
+			name: "TestEncryptRSA - error",
+			args: args{
+				keyName: "TESTKEYINVALID",
+				data:    []byte("data"),
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "TestEncryptRSA - plain text",
+			args: args{
+				keyName: "TESTKEYINVALID",
+				data:    []byte("data"),
+			},
+			want:    &models.Payload{Data: "data"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := EncryptRSA(tt.args.keyName, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EncryptRSA() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.want != nil {
+				if got.Data != tt.want.Data {
+					t.Errorf("EncryptRSA() = %v, want %v", got.Data, tt.want.Data)
+				}
+
+				payload, err := DecryptRSA(got.String())
+				if err != nil {
+					t.Errorf("DecryptRSA() error = %v", err)
+					return
+				}
+
+				if payload.Data != tt.want.Data {
+					t.Errorf("EncryptRSA() = %v, want %v", payload.Data, tt.want.Data)
+				}
+			}
+		})
+	}
+}
+func TestEncryptAES(t *testing.T) {
+	// teardownSuite := setupSuite(t)
+	// LoadKeysFromEnv()
+	// defer teardownSuite(t)
+	type args struct {
+		secret string
+		data   []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *models.Payload
+		wantErr bool
+	}{
+		{
+			name: "TestEncryptAES - No errors",
+			args: args{
+				secret: "mysecret12345678",
+				data:   []byte("data"),
+			},
+			want: &models.Payload{
+				Data:          "data",
+				EncryptedData: "encrypted_data", // Replace with actual expected encrypted data
+			},
+			wantErr: false,
+		},
+		{
+			name: "TestEncryptAES - Invalid Key Size",
+			args: args{
+				secret: "mysecret",
+				data:   []byte(""),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "TestEncryptAES - Invalid secret",
+			args: args{
+				secret: "",
+				data:   []byte("data"),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := EncryptAES(tt.args.secret, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("EncryptAES() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.want != nil {
+				if got.Data != tt.want.Data {
+					t.Errorf("EncryptAES() = %v, want %v", got.Data, tt.want.Data)
+				}
+
+				payload, err := DecryptAES(tt.args.secret, got.String())
+				if err != nil {
+					t.Errorf("DecryptAES() error = %v", err)
+					return
+				}
+
+				if payload.Data != tt.want.Data {
+					t.Errorf("EncryptAES() = %v, want %v", payload.Data, tt.want.Data)
 				}
 			}
 		})

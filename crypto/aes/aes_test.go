@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nected/go-lib/crypto"
+	"github.com/nected/go-lib/crypto/models"
 )
 
 func TestEncryptAES(t *testing.T) {
@@ -16,7 +16,7 @@ func TestEncryptAES(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *crypto.Payload
+		want    *models.Payload
 		wantErr bool
 	}{
 		{
@@ -25,8 +25,8 @@ func TestEncryptAES(t *testing.T) {
 				secret: "someRandomSecret",
 				data:   []byte("data"),
 			},
-			want: &crypto.Payload{
-				KeyType:       crypto.KeyTypeAES,
+			want: &models.Payload{
+				KeyType:       models.KeyTypeAES,
 				Data:          "data",
 				EncryptedData: "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
 			},
@@ -44,7 +44,7 @@ func TestEncryptAES(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := EncryptAES(tt.args.secret, tt.args.data)
+			got, err := Encrypt(tt.args.secret, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptAES() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -57,7 +57,7 @@ func TestEncryptAES(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(got.EncryptedData, tt.want.EncryptedData) {
-				payload, err := DecryptAES(tt.args.secret, got.EncryptedData)
+				payload, err := Decrypt(tt.args.secret, got.EncryptedData)
 				if err != nil {
 					t.Errorf("DecryptAES() error = %v", err)
 				}
@@ -78,7 +78,7 @@ func TestDecryptAES(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *crypto.Payload
+		want    *models.Payload
 		wantErr bool
 	}{
 		{
@@ -87,8 +87,8 @@ func TestDecryptAES(t *testing.T) {
 				secret: "someRandomSecret",
 				data:   "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
 			},
-			want: &crypto.Payload{
-				KeyType: crypto.KeyTypeAES,
+			want: &models.Payload{
+				KeyType: models.KeyTypeAES,
 				Data:    "data",
 			},
 			wantErr: false,
@@ -123,7 +123,7 @@ func TestDecryptAES(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := DecryptAES(tt.args.secret, tt.args.data)
+			got, err := Decrypt(tt.args.secret, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DecryptAES() error = %v, wantErr %v", err, tt.wantErr)
 				return

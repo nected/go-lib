@@ -1,4 +1,4 @@
-package crypto
+package models
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ type Payload struct {
 
 func (p *Payload) String() string {
 	if p.KeyName == "" {
-		return p.Data
+		return p.EncryptedData
 	}
 	if p.KeyType == KeyTypeAES {
 		return p.EncryptedData

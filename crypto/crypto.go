@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nected/go-lib/crypto/common"
+	"github.com/nected/go-lib/crypto/aes"
+	"github.com/nected/go-lib/crypto/models"
+	"github.com/nected/go-lib/crypto/rsa"
 )
 
 // key config format
@@ -17,55 +19,20 @@ const (
 	PRIV_KEY_TYPE  = "PRIVATE KEY"
 )
 
-var encryptInfo *EncryptStruct
-
-type EncryptStruct struct {
-	AvailableKeys map[string]map[string]common.KeyInfo
-}
-
-func getEncryptInfo() *EncryptStruct {
-	return encryptInfo
-}
-
-func GetEncryptionKey(keyName string) *common.KeyInfo {
-	info := getEncryptInfo()
-	if info == nil {
-		return nil
-	}
-	keyInfoVersionMap, ok := info.AvailableKeys[keyName]
-	if !ok {
-		return nil
-	}
-	var latestKeyInfo *common.KeyInfo
-	for _, keyInfo := range keyInfoVersionMap {
-		if latestKeyInfo == nil {
-			latestKeyInfo = &keyInfo
-		}
-		if keyInfo.GetCreatedAt().After(latestKeyInfo.GetCreatedAt()) {
-			latestKeyInfo = &keyInfo
-		}
-	}
-	return latestKeyInfo
-}
-
-func setEncryptInfo(info *EncryptStruct) {
-	encryptInfo = info
-}
-
 func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
-	info := getEncryptInfo()
+	info := models.GetEncryptInfo()
 	if info == nil {
-		info = &EncryptStruct{
-			AvailableKeys: make(map[string]map[string]common.KeyInfo),
+		info = &models.EncryptStruct{
+			AvailableKeys: make(map[string]map[string]models.KeyInfo),
 		}
-		setEncryptInfo(info)
+		models.SetEncryptInfo(info)
 	}
 	privateKey, err := loadPrivateKeyFromFile(keyPath)
 	if err != nil {
 		return err
 	}
 	publicKey := generatePublicKey(privateKey)
-	keyInfo := common.KeyInfo{
+	keyInfo := models.KeyInfo{
 		PrivKey:   privateKey,
 		PubKey:    publicKey,
 		Name:      keyName,
@@ -91,13 +58,13 @@ func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
 //   - KEY_TESTKEY_1_0
 //   - KEY_TESTKEY_2_0_1614556800000
 func LoadKeysFromEnv() error {
-	info := getEncryptInfo()
+	info := models.GetEncryptInfo()
 
 	if info == nil {
-		info = &EncryptStruct{
-			AvailableKeys: make(map[string]map[string]common.KeyInfo),
+		info = &models.EncryptStruct{
+			AvailableKeys: make(map[string]map[string]models.KeyInfo),
 		}
-		setEncryptInfo(info)
+		models.SetEncryptInfo(info)
 	}
 
 	for _, env := range os.Environ() {
@@ -161,10 +128,10 @@ func LoadKeysFromEnv() error {
 		}
 
 		if _, ok := info.AvailableKeys[keyName]; !ok {
-			info.AvailableKeys[keyName] = make(map[string]common.KeyInfo)
+			info.AvailableKeys[keyName] = make(map[string]models.KeyInfo)
 		}
 
-		info.AvailableKeys[keyName][keyVersion] = common.KeyInfo{
+		info.AvailableKeys[keyName][keyVersion] = models.KeyInfo{
 			Name:      keyName,
 			Version:   keyVersion,
 			CreatedAt: time.Now(),
@@ -175,4 +142,20 @@ func LoadKeysFromEnv() error {
 
 	}
 	return nil
+}
+
+func EncryptRSA(keyName string, data []byte) (*models.Payload, error) {
+	return rsa.Encrypt(keyName, data)
+}
+
+func DecryptRSA(data string) (*models.Payload, error) {
+	return rsa.Decrypt(data)
+}
+
+func EncryptAES(secret string, data []byte) (*models.Payload, error) {
+	return aes.Encrypt(secret, data)
+}
+
+func DecryptAES(secret string, data string) (*models.Payload, error) {
+	return aes.Decrypt(secret, data)
 }

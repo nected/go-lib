@@ -1,4 +1,4 @@
-package common
+package models
 
 import (
 	"crypto/rand"
@@ -7,6 +7,12 @@ import (
 	"fmt"
 	"time"
 )
+
+type EncryptStruct struct {
+	AvailableKeys map[string]map[string]KeyInfo
+}
+
+var encryptInfo *EncryptStruct
 
 type KeyInfo struct {
 	PrivKey   *rsa.PrivateKey
@@ -105,4 +111,33 @@ func (k *KeyInfo) Decrypt(data []byte) ([]byte, error) {
 		decryptedData = append(decryptedData, decrypted...)
 	}
 	return decryptedData, nil
+}
+
+func GetEncryptInfo() *EncryptStruct {
+	return encryptInfo
+}
+
+func SetEncryptInfo(info *EncryptStruct) {
+	encryptInfo = info
+}
+
+func GetEncryptionKey(keyName string) *KeyInfo {
+	info := GetEncryptInfo()
+	if info == nil {
+		return nil
+	}
+	keyInfoVersionMap, ok := info.AvailableKeys[keyName]
+	if !ok {
+		return nil
+	}
+	var latestKeyInfo *KeyInfo
+	for _, keyInfo := range keyInfoVersionMap {
+		if latestKeyInfo == nil {
+			latestKeyInfo = &keyInfo
+		}
+		if keyInfo.GetCreatedAt().After(latestKeyInfo.GetCreatedAt()) {
+			latestKeyInfo = &keyInfo
+		}
+	}
+	return latestKeyInfo
 }
