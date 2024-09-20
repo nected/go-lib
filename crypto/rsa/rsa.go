@@ -4,10 +4,29 @@ import (
 	"fmt"
 
 	"github.com/nected/go-lib/crypto/base64"
+	"github.com/nected/go-lib/crypto/errors"
 	"github.com/nected/go-lib/crypto/models"
 )
 
+// Encrypt encrypts the given data using the specified encryption key.
+// If the data is already encrypted, it returns the data as is.
+// If the key is not found, it returns the data as a string without encryption.
+//
+// Parameters:
+//   - keyName: The name of the encryption key to use.
+//   - data: The data to be encrypted.
+//
+// Returns:
+//   - *models.Payload: A payload containing the original data and the encrypted data.
+//   - error: An error if the encryption process fails.
 func Encrypt(keyName string, data []byte) (*models.Payload, error) {
+	if alreadyEncrypted(data) {
+		return &models.Payload{
+			Data:             string(data),
+			EncryptedData:    string(data),
+			AlreadyEncrypted: true,
+		}, nil
+	}
 	keyInfo := models.GetEncryptionKey(keyName)
 	if keyInfo == nil {
 		// if key not found return stringfied data
@@ -33,10 +52,29 @@ func Encrypt(keyName string, data []byte) (*models.Payload, error) {
 	}, nil
 }
 
+// Decrypt decrypts the given base64-encoded data string and returns a Payload object.
+// If the data is not encrypted, it returns the data as is.
+//
+// Parameters:
+//   - data: A base64-encoded string that may contain encrypted data.
+//
+// Returns:
+//   - *models.Payload: A pointer to the Payload object containing the decrypted data.
+//   - error: An error object if any error occurs during decryption.
+//
+// The function performs the following steps:
+//  1. Checks if the input data string is empty and returns nil if true.
+//  2. Decodes the base64-encoded input data.
+//  3. Checks if the decoded data is not encrypted and returns it as is if true.
+//  4. Parses the decoded data to extract keyName, keyVersion, and encryptedData.
+//  5. Retrieves the encryption key information using the keyName.
+//  6. Decodes the base64-encoded encryptedData.
+//  7. Decrypts the encryptedData using the retrieved key information.
+//  8. Constructs and returns a Payload object containing the decrypted data and other relevant information.
 func Decrypt(data string) (*models.Payload, error) {
 	p := models.Payload{}
 	if data == "" {
-		return nil, nil
+		return nil, errors.ErrEmptyData
 	}
 
 	// decode data
@@ -77,10 +115,22 @@ func Decrypt(data string) (*models.Payload, error) {
 		KeyName:       keyName,
 		KeyVersion:    keyVersion,
 		Data:          string(decryptedData),
-		EncryptedData: encryptedData,
+		EncryptedData: base64.B64Encode([]byte(encryptedData)),
 	}, nil
 }
 
+// parseData parses a string containing key name, key version, and encrypted data
+// separated by '$' characters. It returns the key name, key version, and encrypted data.
+//
+// The input string is expected to be in the format: "$keyName$keyVersion$encryptedData".
+//
+// Parameters:
+// - data: A string containing the key name, key version, and encrypted data.
+//
+// Returns:
+// - keyName: The extracted key name.
+// - keyVersion: The extracted key version.
+// - encryptedData: The extracted encrypted data.
 func parseData(data string) (string, string, string) {
 	keyName := ""
 	keyVersion := ""
@@ -101,4 +151,23 @@ func parseData(data string) (string, string, string) {
 	}
 
 	return keyName, keyVersion, encryptedData
+}
+
+// alreadyEncrypted checks if the provided data is already encrypted.
+// It attempts to decode the data from base64 and then parse it to extract a key name.
+// If the key name is not empty, it returns true, indicating that the data is encrypted.
+// Otherwise, it returns false.
+//
+// Parameters:
+// - data: A byte slice containing the data to check.
+//
+// Returns:
+// - bool: True if the data is already encrypted, false otherwise.
+func alreadyEncrypted(data []byte) bool {
+	decodedData, err := base64.B64Decode(string(data))
+	if err != nil {
+		return false
+	}
+	keyName, _, _ := parseData(decodedData)
+	return keyName != ""
 }

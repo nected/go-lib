@@ -10,6 +10,9 @@ import (
 )
 
 func Encrypt(secret string, data []byte) (*models.Payload, error) {
+	if len(data) == 0 {
+		return nil, nil
+	}
 	block, err := aes.NewCipher([]byte(secret))
 	if err != nil {
 		return nil, err

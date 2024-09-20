@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nected/go-lib/crypto/config"
 	"github.com/nected/go-lib/crypto/models"
 )
 
@@ -28,7 +29,7 @@ func generatePrivateKey() string {
 	}
 
 	privateKeyBlock := &pem.Block{
-		Type:  PRIV_KEY_TYPE,
+		Type:  config.PRIV_KEY_TYPE,
 		Bytes: privatekeyBytes,
 	}
 
@@ -310,77 +311,6 @@ func TestEncryptRSA(t *testing.T) {
 
 				if payload.Data != tt.want.Data {
 					t.Errorf("EncryptRSA() = %v, want %v", payload.Data, tt.want.Data)
-				}
-			}
-		})
-	}
-}
-func TestEncryptAES(t *testing.T) {
-	// teardownSuite := setupSuite(t)
-	// LoadKeysFromEnv()
-	// defer teardownSuite(t)
-	type args struct {
-		secret string
-		data   []byte
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *models.Payload
-		wantErr bool
-	}{
-		{
-			name: "TestEncryptAES - No errors",
-			args: args{
-				secret: "mysecret12345678",
-				data:   []byte("data"),
-			},
-			want: &models.Payload{
-				Data:          "data",
-				EncryptedData: "encrypted_data", // Replace with actual expected encrypted data
-			},
-			wantErr: false,
-		},
-		{
-			name: "TestEncryptAES - Invalid Key Size",
-			args: args{
-				secret: "mysecret",
-				data:   []byte(""),
-			},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "TestEncryptAES - Invalid secret",
-			args: args{
-				secret: "",
-				data:   []byte("data"),
-			},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := EncryptAES(tt.args.secret, tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EncryptAES() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-
-			if tt.want != nil {
-				if got.Data != tt.want.Data {
-					t.Errorf("EncryptAES() = %v, want %v", got.Data, tt.want.Data)
-				}
-
-				payload, err := DecryptAES(tt.args.secret, got.String())
-				if err != nil {
-					t.Errorf("DecryptAES() error = %v", err)
-					return
-				}
-
-				if payload.Data != tt.want.Data {
-					t.Errorf("EncryptAES() = %v, want %v", payload.Data, tt.want.Data)
 				}
 			}
 		})

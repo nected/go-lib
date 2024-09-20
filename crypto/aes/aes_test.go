@@ -7,69 +7,6 @@ import (
 	"github.com/nected/go-lib/crypto/models"
 )
 
-func TestEncryptAES(t *testing.T) {
-	type args struct {
-		secret        string
-		data          []byte
-		encryptedData string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *models.Payload
-		wantErr bool
-	}{
-		{
-			name: "Test 1",
-			args: args{
-				secret: "someRandomSecret",
-				data:   []byte("data"),
-			},
-			want: &models.Payload{
-				KeyType:       models.KeyTypeAES,
-				Data:          "data",
-				EncryptedData: "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
-			},
-			wantErr: false,
-		},
-		{
-			name: "Test 2 : Invalid secret",
-			args: args{
-				secret: "1",
-				data:   []byte("data"),
-			},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := Encrypt(tt.args.secret, tt.args.data)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EncryptAES() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got == nil && tt.want == nil {
-				return
-			}
-			if !reflect.DeepEqual(got.Data, tt.want.Data) {
-				t.Errorf("EncryptAES() = %v, want data %v", got.Data, tt.want.Data)
-			}
-
-			if !reflect.DeepEqual(got.EncryptedData, tt.want.EncryptedData) {
-				payload, err := Decrypt(tt.args.secret, got.EncryptedData)
-				if err != nil {
-					t.Errorf("DecryptAES() error = %v", err)
-				}
-				if !reflect.DeepEqual(payload.Data, tt.want.Data) {
-					t.Errorf("DecryptAES() = %v, want data %v", payload.Data, tt.want.Data)
-				}
-
-			}
-		})
-	}
-}
-
 func TestDecryptAES(t *testing.T) {
 	type args struct {
 		secret string
@@ -82,19 +19,18 @@ func TestDecryptAES(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Test 1",
+			name: "Valid decryption",
 			args: args{
 				secret: "someRandomSecret",
 				data:   "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
 			},
 			want: &models.Payload{
-				KeyType: models.KeyTypeAES,
-				Data:    "data",
+				Data: "data",
 			},
 			wantErr: false,
 		},
 		{
-			name: "Test 2 : Empty Data",
+			name: "Empty data",
 			args: args{
 				secret: "someRandomSecret",
 				data:   "",
@@ -103,19 +39,28 @@ func TestDecryptAES(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Test 3 : Invalid encoded data",
+			name: "Invalid base64 data",
 			args: args{
 				secret: "someRandomSecret",
-				data:   "invalid",
+				data:   "invalid_base64",
 			},
 			want:    nil,
 			wantErr: true,
 		},
 		{
-			name: "Test 4 : Invalid secret",
+			name: "Invalid secret",
 			args: args{
 				secret: "1",
 				data:   "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "Short decoded data",
+			args: args{
+				secret: "someRandomSecret",
+				data:   "short",
 			},
 			want:    nil,
 			wantErr: true,
@@ -125,14 +70,85 @@ func TestDecryptAES(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Decrypt(tt.args.secret, tt.args.data)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("DecryptAES() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Decrypt() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got == nil && tt.want == nil {
 				return
 			}
 			if !reflect.DeepEqual(got.Data, tt.want.Data) {
-				t.Errorf("DecryptAES() = %v, want %v", got, tt.want)
+				t.Errorf("Decrypt() = %v, want %v", got.Data, tt.want.Data)
+			}
+		})
+	}
+}
+func TestEncryptAES(t *testing.T) {
+	type args struct {
+		secret string
+		data   []byte
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *models.Payload
+		wantErr bool
+	}{
+		{
+			name: "Valid encryption",
+			args: args{
+				secret: "someRandomSecret",
+				data:   []byte("data"),
+			},
+			want: &models.Payload{
+				KeyType: models.KeyTypeAES,
+				Data:    "data",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Empty data",
+			args: args{
+				secret: "someRandomSecret",
+				data:   []byte(""),
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "Invalid secret",
+			args: args{
+				secret: "1",
+				data:   []byte("data"),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Encrypt(tt.args.secret, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Encrypt() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got == nil && tt.want == nil {
+				return
+			}
+			if got.Data != tt.want.Data {
+				t.Errorf("Encrypt() = %v, want %v", got.Data, tt.want.Data)
+			}
+			if got.KeyType != tt.want.KeyType {
+				t.Errorf("Encrypt() KeyType = %v, want %v", got.KeyType, tt.want.KeyType)
+			}
+			if !tt.wantErr {
+				// Decrypt to verify the encrypted data
+				decryptedPayload, err := Decrypt(tt.args.secret, got.EncryptedData)
+				if err != nil {
+					t.Errorf("Decrypt() error = %v", err)
+				}
+				if decryptedPayload.Data != tt.want.Data {
+					t.Errorf("Decrypt() = %v, want %v", decryptedPayload.Data, tt.want.Data)
+				}
 			}
 		})
 	}

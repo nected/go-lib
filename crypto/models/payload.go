@@ -15,11 +15,12 @@ const (
 
 type Payload struct {
 	// Payload is the data to be encrypted
-	KeyName       string  `json:"keyName"`
-	KeyVersion    string  `json:"keyVersion"`
-	KeyType       KeyType `json:"keyType"`
-	Data          string  `json:"data"`
-	EncryptedData string  `json:"encryptedData"`
+	KeyName          string  `json:"keyName"`
+	KeyVersion       string  `json:"keyVersion"`
+	KeyType          KeyType `json:"keyType"`
+	Data             string  `json:"data"`
+	EncryptedData    string  `json:"encryptedData"`
+	AlreadyEncrypted bool    `json:"alreadyEncrypted"`
 }
 
 func (p *Payload) String() string {
