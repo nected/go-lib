@@ -80,7 +80,8 @@ func Decrypt(data string) (*models.Payload, error) {
 	// decode data
 	decodedData, err := base64.B64Decode(data)
 	if err != nil {
-		return nil, err
+		p.Data = data
+		return &p, nil
 	}
 
 	// if data is not encrypted return as is

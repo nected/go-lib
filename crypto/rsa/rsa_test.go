@@ -267,9 +267,10 @@ func TestDecrypt(t *testing.T) {
 			args: args{
 				data: "invalidbase64data",
 			},
-			want:    nil,
-			wantErr: true,
-			err:     errors.ErrInvalidData,
+			want: &models.Payload{
+				Data: "invalidbase64data",
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
