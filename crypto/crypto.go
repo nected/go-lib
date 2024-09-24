@@ -26,3 +26,7 @@ func DecryptAES(secret string, data string) (*models.Payload, error) {
 func LoadKeysFromEnv() error {
 	return config.LoadKeysFromEnv()
 }
+
+func ListKeys() *models.EncryptStruct {
+	return models.GetEncryptInfo()
+}
