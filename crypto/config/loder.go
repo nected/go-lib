@@ -13,12 +13,12 @@ import (
 // key config format
 
 func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
-	info := models.GetEncryptInfo()
+	info := models.GetEncryptKeyMap()
 	if info == nil {
 		info = &models.EncryptStruct{
 			AvailableKeys: make(map[string]map[string]models.KeyInfo),
 		}
-		models.SetEncryptInfo(info)
+		models.SetEncryptKeysMap(info)
 	}
 	privateKey, err := loadPrivateKeyFromFile(keyPath)
 	if err != nil {
@@ -51,13 +51,13 @@ func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
 //   - KEY_TESTKEY_1_0
 //   - KEY_TESTKEY_2_0_1614556800000
 func LoadKeysFromEnv() error {
-	info := models.GetEncryptInfo()
+	info := models.GetEncryptKeyMap()
 
 	if info == nil {
 		info = &models.EncryptStruct{
 			AvailableKeys: make(map[string]map[string]models.KeyInfo),
 		}
-		models.SetEncryptInfo(info)
+		models.SetEncryptKeysMap(info)
 	}
 
 	for _, env := range os.Environ() {

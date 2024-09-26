@@ -113,16 +113,16 @@ func (k *KeyInfo) Decrypt(data []byte) ([]byte, error) {
 	return decryptedData, nil
 }
 
-func GetEncryptInfo() *EncryptStruct {
+func GetEncryptKeyMap() *EncryptStruct {
 	return encryptInfo
 }
 
-func SetEncryptInfo(info *EncryptStruct) {
+func SetEncryptKeysMap(info *EncryptStruct) {
 	encryptInfo = info
 }
 
 func GetEncryptionKey(keyName string) *KeyInfo {
-	info := GetEncryptInfo()
+	info := GetEncryptKeyMap()
 	if info == nil {
 		return nil
 	}
