@@ -116,6 +116,7 @@ func Decrypt(data string) (*models.Payload, error) {
 	return &models.Payload{
 		KeyName:       keyName,
 		KeyVersion:    keyVersion,
+		KeyType:       models.KeyTypeRSA,
 		Data:          string(decryptedData),
 		EncryptedData: base64.B64Encode([]byte(encryptedData)),
 	}, nil

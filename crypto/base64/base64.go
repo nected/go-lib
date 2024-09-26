@@ -17,3 +17,15 @@ func B64Decode(data string) (string, error) {
 	}
 	return string(decodedData), nil
 }
+
+func B64EncodeURL(data []byte) string {
+	return base64.URLEncoding.EncodeToString([]byte(data))
+}
+
+func B64DecodeURL(data string) (string, error) {
+	decodedData, err := base64.URLEncoding.DecodeString(data)
+	if err != nil {
+		return "", errors.ErrInvalidData
+	}
+	return string(decodedData), nil
+}

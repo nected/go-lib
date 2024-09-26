@@ -33,7 +33,7 @@ func Encrypt(secret string, data []byte) (*models.Payload, error) {
 	// encrypt data
 	encryptedData := gcm.Seal(nonce, nonce, data, nil)
 
-	encryptedDataString := base64.B64Encode(encryptedData)
+	encryptedDataString := base64.B64EncodeURL(encryptedData)
 
 	return &models.Payload{
 		KeyType:       models.KeyTypeAES,
@@ -49,7 +49,7 @@ func Decrypt(secret string, data string) (*models.Payload, error) {
 	}
 
 	// decode data
-	decodedData, err := base64.B64Decode(data)
+	decodedData, err := base64.B64DecodeURL(data)
 	if err != nil {
 		return nil, err
 	}

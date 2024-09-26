@@ -27,6 +27,10 @@ func LoadKeysFromEnv() error {
 	return config.LoadKeysFromEnv()
 }
 
+func LoadKeysFromFile(keyName, keyPath string) error {
+	return config.LoadKeysFromFile(keyName, keyPath)
+}
+
 func ListKeys() *models.EncryptStruct {
 	return models.GetEncryptKeysMap()
 }

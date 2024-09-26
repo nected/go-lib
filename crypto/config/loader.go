@@ -10,7 +10,6 @@ import (
 )
 
 // key config format
-
 func LoadKeysFromFile(keyName, keyPath string) error {
 	version := 1
 	info := models.GetEncryptKeysMap()
@@ -38,14 +37,14 @@ func LoadKeysFromFile(keyName, keyPath string) error {
 
 // env key format
 //
-// KEY_<key_name>_<key_version>
+// ENCRYPTKEY_<key_name>_<key_version>
 //
 // Parameters:
 //   - key_name: name of the key
 //   - key_version(optional): version of the key, default is 1
 //
 // Example:
-//   - KEY_TESTKEY_1_0
+//   - ENCRYPTKEY_TESTKEY_1
 func LoadKeysFromEnv() (err error) {
 	info := models.GetEncryptKeysMap()
 

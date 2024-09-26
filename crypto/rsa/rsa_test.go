@@ -49,17 +49,17 @@ func populateKeys() {
 
 func setupSuite(t *testing.T) func(t *testing.T) {
 	var privateKey = generatePrivateKey()
-	os.Setenv("KEY_TESTKEY_1_0", privateKey)
-	os.Setenv("KEY_TESTKEY1_2_0", privateKey)
-	os.Setenv("KEY_TESTKEYR_1_1726147578", privateKey)
-	os.Setenv("KEY_TESTKEYINVALID_1_0", "lkajds")
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY_1"), privateKey)
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY1_2"), privateKey)
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYR_1"), privateKey)
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYINVALID"), "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
-		defer os.Unsetenv("KEY_TESTKEY_1_0")
-		defer os.Unsetenv("KEY_TESTKEY1_2_0")
-		defer os.Unsetenv("KEY_TESTKEYR_1_1726147578")
-		defer os.Unsetenv("KEY_TESTKEYINVALID_1_0")
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY_1"))
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY1_2"))
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYR_1"))
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYINVALID"))
 		t.Log("teardown suite")
 	}
 

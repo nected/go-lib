@@ -39,17 +39,18 @@ func generatePrivateKey() string {
 
 func setupSuite(t *testing.T) func(t *testing.T) {
 	var privateKey = generatePrivateKey()
-	os.Setenv("KEY_TESTKEY_1", privateKey)
-	os.Setenv("KEY_TESTKEY_2", privateKey)
-	os.Setenv("KEY_TESTKEYINVALID_1", "lkajds")
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY_1"), privateKey)
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY_2"), privateKey)
+	os.Setenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYINVALID"), "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
-		defer os.Unsetenv("KEY_TESTKEY_1")
-		defer os.Unsetenv("KEY_TESTKEY_2")
-		defer os.Unsetenv("KEY_TESTKEYINVALID_1")
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY_1"))
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEY1_2"))
+		defer os.Unsetenv(fmt.Sprintf("%s_%s", config.KEY_ENV_PREFIX, "TESTKEYINVALID"))
 		t.Log("teardown suite")
 	}
+
 }
 
 func TestLoadKeysFromEnv(t *testing.T) {

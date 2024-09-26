@@ -22,7 +22,7 @@ func TestDecryptAES(t *testing.T) {
 			name: "Valid decryption",
 			args: args{
 				secret: "someRandomSecret",
-				data:   "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
+				data:   "nVsk7LROacUqg5p70an8BBqBXwDYDGmhNz1CJiyfLak=",
 			},
 			want: &models.Payload{
 				Data: "data",
