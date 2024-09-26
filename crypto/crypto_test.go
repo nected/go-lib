@@ -40,17 +40,15 @@ func generatePrivateKey() string {
 
 func setupSuite(t *testing.T) func(t *testing.T) {
 	var privateKey = generatePrivateKey()
-	os.Setenv("KEY_TESTKEY_1_0", privateKey)
-	os.Setenv("KEY_TESTKEY_2_0", privateKey)
-	os.Setenv("KEY_TESTKEYR_1_1726147578", privateKey)
-	os.Setenv("KEY_TESTKEYINVALID_1_0", "lkajds")
+	os.Setenv("KEY_TESTKEY_1", privateKey)
+	os.Setenv("KEY_TESTKEY_2", privateKey)
+	os.Setenv("KEY_TESTKEYINVALID_1", "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
-		defer os.Unsetenv("KEY_TESTKEY_1_0")
-		defer os.Unsetenv("KEY_TESTKEY_2_0")
-		defer os.Unsetenv("KEY_TESTKEYR_1_1726147578")
-		defer os.Unsetenv("KEY_TESTKEYINVALID_1_0")
+		defer os.Unsetenv("KEY_TESTKEY_1")
+		defer os.Unsetenv("KEY_TESTKEY_2")
+		defer os.Unsetenv("KEY_TESTKEYINVALID_1")
 		t.Log("teardown suite")
 	}
 }
@@ -58,14 +56,12 @@ func setupSuite(t *testing.T) func(t *testing.T) {
 func TestLoadKeysFromEnv(t *testing.T) {
 	teardownSuite := setupSuite(t)
 	defer teardownSuite(t)
-	rT := time.Unix(1726147578, 0)
 	tests := []struct {
 		name        string
 		wantErr     bool
 		keyName     string
 		keyExists   bool
 		version     string
-		rotate      *time.Time
 		privKeyNull bool
 		pubKeyNull  bool
 	}{
@@ -75,7 +71,6 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			keyName:     "TESTKEY",
 			keyExists:   true,
 			version:     "1",
-			rotate:      nil,
 			privKeyNull: false,
 			pubKeyNull:  false,
 		},
@@ -85,17 +80,6 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			keyName:     "TESTKEY",
 			keyExists:   true,
 			version:     "2",
-			rotate:      nil,
-			privKeyNull: false,
-			pubKeyNull:  false,
-		},
-		{
-			name:        "TestLoadKeysFromEnv - No errors",
-			wantErr:     false,
-			keyName:     "TESTKEYR",
-			keyExists:   true,
-			version:     "1",
-			rotate:      &rT,
 			privKeyNull: false,
 			pubKeyNull:  false,
 		},
@@ -105,7 +89,6 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			keyName:     "TESTKEYA",
 			keyExists:   false,
 			version:     "1",
-			rotate:      nil,
 			privKeyNull: true,
 			pubKeyNull:  true,
 		},
@@ -163,22 +146,6 @@ func TestLoadKeysFromEnv(t *testing.T) {
 				}
 			}
 
-			if tt.rotate != nil {
-				if info.GetRotateAt() == nil {
-					t.Errorf("GetRotateAt() = %v, want not nil", info.GetRotateAt())
-				} else {
-					if info.GetRotateAt().Unix() != tt.rotate.Unix() {
-						t.Errorf("GetRotateAt() = %v, want %v", info.GetRotateAt().Unix(), tt.rotate.Unix())
-					}
-				}
-			}
-
-			if tt.rotate == nil {
-				if info.GetRotateAt() != nil {
-					t.Errorf("GetRotateAt() = %v, want nil", info.GetRotateAt())
-				}
-			}
-
 		})
 	}
 }
@@ -208,7 +175,6 @@ func TestGetEncryptionKey(t *testing.T) {
 				Name:      "TESTKEY",
 				Version:   "1",
 				CreatedAt: time.Time{},
-				RotateAt:  nil,
 			},
 		},
 	}

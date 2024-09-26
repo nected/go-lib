@@ -20,7 +20,6 @@ type KeyInfo struct {
 	Name      string
 	Version   string
 	CreatedAt time.Time
-	RotateAt  *time.Time
 }
 
 func (k *KeyInfo) GetPrivKey() *rsa.PrivateKey {
@@ -65,14 +64,6 @@ func (k *KeyInfo) GetCreatedAt() time.Time {
 
 func (k *KeyInfo) SetCreatedAt(createdAt time.Time) {
 	k.CreatedAt = createdAt
-}
-
-func (k *KeyInfo) GetRotateAt() *time.Time {
-	return k.RotateAt
-}
-
-func (k *KeyInfo) SetRotateAt(rotateAt *time.Time) {
-	k.RotateAt = rotateAt
 }
 
 func (k *KeyInfo) Encrypt(data []byte) ([]byte, error) {

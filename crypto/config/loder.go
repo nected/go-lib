@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,7 +11,7 @@ import (
 
 // key config format
 
-func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
+func LoadKeysFromFile(keyName, keyPath string) error {
 	info := models.GetEncryptKeysMap()
 	if info == nil {
 		info = &models.EncryptStruct{
@@ -31,7 +30,6 @@ func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
 		Name:      keyName,
 		Version:   "1",
 		CreatedAt: time.Now(),
-		RotateAt:  rotateAt,
 	}
 
 	info.AvailableKeys[keyName][keyInfo.Version] = keyInfo
@@ -40,16 +38,14 @@ func LoadKeysFromFile(keyName, keyPath string, rotateAt *time.Time) error {
 
 // env key format
 //
-// KEY_<key_name>_<key_version>_<rotate_time_milli>
+// KEY_<key_name>_<key_version>
 //
 // Parameters:
 //   - key_name: name of the key
 //   - key_version(optional): version of the key, default is 1
-//   - rotate_time_milli(optional): time in milliseconds when the key should be rotated, default is 0
 //
 // Example:
 //   - KEY_TESTKEY_1_0
-//   - KEY_TESTKEY_2_0_1614556800000
 func LoadKeysFromEnv() error {
 	info := models.GetEncryptKeysMap()
 
@@ -93,22 +89,6 @@ func LoadKeysFromEnv() error {
 			keyVersion = parts[2]
 		}
 
-		var rotateAt *time.Time
-		if len(parts) >= 4 {
-			rorateAtInt, err := strconv.ParseInt(parts[3], 10, 64)
-			if err != nil {
-				// invalid rotate time format
-				// skip this key
-				continue
-			}
-			if rorateAtInt <= 0 {
-				rotateAt = nil
-			} else {
-				rotateAtTime := time.Unix(rorateAtInt, 0)
-				rotateAt = &rotateAtTime
-			}
-		}
-
 		privateKey, err := loadPrivateKey([]byte(value))
 		if err != nil {
 			fmt.Println("Invalid private key")
@@ -128,7 +108,6 @@ func LoadKeysFromEnv() error {
 			Name:      keyName,
 			Version:   keyVersion,
 			CreatedAt: time.Now(),
-			RotateAt:  rotateAt,
 			PrivKey:   privateKey,
 			PubKey:    generatePublicKey(privateKey),
 		}
