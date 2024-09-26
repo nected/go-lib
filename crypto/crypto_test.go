@@ -41,12 +41,14 @@ func generatePrivateKey() string {
 func setupSuite(t *testing.T) func(t *testing.T) {
 	var privateKey = generatePrivateKey()
 	os.Setenv("KEY_TESTKEY_1_0", privateKey)
+	os.Setenv("KEY_TESTKEY_2_0", privateKey)
 	os.Setenv("KEY_TESTKEYR_1_1726147578", privateKey)
 	os.Setenv("KEY_TESTKEYINVALID_1_0", "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
 		defer os.Unsetenv("KEY_TESTKEY_1_0")
+		defer os.Unsetenv("KEY_TESTKEY_2_0")
 		defer os.Unsetenv("KEY_TESTKEYR_1_1726147578")
 		defer os.Unsetenv("KEY_TESTKEYINVALID_1_0")
 		t.Log("teardown suite")
@@ -68,11 +70,21 @@ func TestLoadKeysFromEnv(t *testing.T) {
 		pubKeyNull  bool
 	}{
 		{
-			name:        "TestLoadKeysFromEnv - No errors",
+			name:        "TestLoadKeysFromEnv version 1 - No errors",
 			wantErr:     false,
 			keyName:     "TESTKEY",
 			keyExists:   true,
 			version:     "1",
+			rotate:      nil,
+			privKeyNull: false,
+			pubKeyNull:  false,
+		},
+		{
+			name:        "TestLoadKeysFromEnv version 2 - No errors",
+			wantErr:     false,
+			keyName:     "TESTKEY",
+			keyExists:   true,
+			version:     "2",
 			rotate:      nil,
 			privKeyNull: false,
 			pubKeyNull:  false,
@@ -111,71 +123,59 @@ func TestLoadKeysFromEnv(t *testing.T) {
 				t.Errorf("LoadKeysFromEnv() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			info := models.GetEncryptKeysMap()
-			if info == nil {
-				t.Errorf("GetEncryptInfo() = %v, want %v", info, &models.EncryptStruct{
-					AvailableKeys: make(map[string]map[string]models.KeyInfo),
-				})
-				return
-			}
-
+			info := models.GetEncryptionKey(tt.keyName, tt.version)
 			if tt.keyExists {
-				if _, ok := info.AvailableKeys[tt.keyName]; !ok {
+				if info == nil {
 					t.Errorf("Key %s not found in AvailableKeys", tt.keyName)
 					return
 				}
 			} else {
-				if _, ok := info.AvailableKeys[tt.keyName]; ok {
+				if info != nil {
 					t.Errorf("Key %s found in AvailableKeys", tt.keyName)
-					return
-				} else {
-					return
+				}
+				return
+			}
+
+			if info.GetName() != tt.keyName {
+				t.Errorf("GetName() = %v, want %v", info.GetName(), tt.keyName)
+			}
+			if info.GetVersion() != tt.version {
+				t.Errorf("GetVersion() = %v, want %v", info.GetVersion(), tt.version)
+			}
+
+			if tt.privKeyNull {
+				if info.GetPrivKey() != nil {
+					t.Errorf("GetPrivKey() = %v, want nil", info.GetPrivKey())
+				}
+			} else {
+				if info.GetPrivKey() == nil {
+					t.Errorf("GetPrivKey() = %v, want not nil", info.GetPrivKey())
 				}
 			}
 
-			keyInfoVersionMap := info.AvailableKeys[tt.keyName]
-			if keyInfo, ok := keyInfoVersionMap[tt.version]; !ok {
-				if keyInfo.GetName() != tt.keyName {
-					t.Errorf("GetName() = %v, want %v", keyInfo.GetName(), tt.keyName)
+			if tt.pubKeyNull {
+				if info.GetPubKey() != nil {
+					t.Errorf("GetPubKey() = %v, want nil", info.GetPubKey())
 				}
-				if keyInfo.GetVersion() != tt.version {
-					t.Errorf("GetVersion() = %v, want %v", keyInfo.GetVersion(), tt.version)
+			} else {
+				if info.GetPubKey() == nil {
+					t.Errorf("GetPubKey() = %v, want not nil", info.GetPubKey())
 				}
+			}
 
-				if tt.privKeyNull {
-					if keyInfo.GetPrivKey() != nil {
-						t.Errorf("GetPrivKey() = %v, want nil", keyInfo.GetPrivKey())
-					}
+			if tt.rotate != nil {
+				if info.GetRotateAt() == nil {
+					t.Errorf("GetRotateAt() = %v, want not nil", info.GetRotateAt())
 				} else {
-					if keyInfo.GetPrivKey() == nil {
-						t.Errorf("GetPrivKey() = %v, want not nil", keyInfo.GetPrivKey())
+					if info.GetRotateAt().Unix() != tt.rotate.Unix() {
+						t.Errorf("GetRotateAt() = %v, want %v", info.GetRotateAt().Unix(), tt.rotate.Unix())
 					}
 				}
+			}
 
-				if tt.pubKeyNull {
-					if keyInfo.GetPubKey() != nil {
-						t.Errorf("GetPubKey() = %v, want nil", keyInfo.GetPubKey())
-					}
-				} else {
-					if keyInfo.GetPubKey() == nil {
-						t.Errorf("GetPubKey() = %v, want not nil", keyInfo.GetPubKey())
-					}
-				}
-
-				if tt.rotate != nil {
-					if keyInfo.GetRotateAt() == nil {
-						t.Errorf("GetRotateAt() = %v, want not nil", keyInfo.GetRotateAt())
-					} else {
-						if keyInfo.GetRotateAt().Unix() != tt.rotate.Unix() {
-							t.Errorf("GetRotateAt() = %v, want %v", keyInfo.GetRotateAt().Unix(), tt.rotate.Unix())
-						}
-					}
-				}
-
-				if tt.rotate == nil {
-					if keyInfo.GetRotateAt() != nil {
-						t.Errorf("GetRotateAt() = %v, want nil", keyInfo.GetRotateAt())
-					}
+			if tt.rotate == nil {
+				if info.GetRotateAt() != nil {
+					t.Errorf("GetRotateAt() = %v, want nil", info.GetRotateAt())
 				}
 			}
 

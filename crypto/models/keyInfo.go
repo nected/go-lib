@@ -132,9 +132,7 @@ func GetEncryptionKey(keyName, version string) *KeyInfo {
 	}
 	if version != "" {
 		keyInfo := keyInfoVersionMap[version]
-		if keyInfo.RotateAt != nil && keyInfo.RotateAt.After(time.Now()) {
-			return &keyInfo
-		}
+		return &keyInfo
 	}
 	var latestKeyInfo *KeyInfo
 	for _, keyInfo := range keyInfoVersionMap {
