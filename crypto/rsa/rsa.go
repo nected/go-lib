@@ -27,7 +27,7 @@ func Encrypt(keyName string, data []byte) (*models.Payload, error) {
 			AlreadyEncrypted: true,
 		}, nil
 	}
-	keyInfo := models.GetEncryptionKey(keyName)
+	keyInfo := models.GetEncryptionKey(keyName, "")
 	if keyInfo == nil {
 		// if key not found return stringfied data
 		return &models.Payload{
@@ -95,7 +95,7 @@ func Decrypt(data string) (*models.Payload, error) {
 
 	keyName, keyVersion, encryptedData := parseData(decodedData)
 
-	keyInfo := models.GetEncryptionKey(keyName)
+	keyInfo := models.GetEncryptionKey(keyName, keyVersion)
 
 	if keyInfo == nil {
 		return nil, fmt.Errorf("key %s not found", keyName)

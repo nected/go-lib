@@ -12,7 +12,7 @@ type EncryptStruct struct {
 	AvailableKeys map[string]map[string]KeyInfo
 }
 
-var encryptKeyMap *EncryptStruct
+var encryptKeysMap *EncryptStruct
 
 type KeyInfo struct {
 	PrivKey   *rsa.PrivateKey
@@ -113,22 +113,28 @@ func (k *KeyInfo) Decrypt(data []byte) ([]byte, error) {
 	return decryptedData, nil
 }
 
-func GetEncryptKeyMap() *EncryptStruct {
-	return encryptKeyMap
+func GetEncryptKeysMap() *EncryptStruct {
+	return encryptKeysMap
 }
 
 func SetEncryptKeysMap(info *EncryptStruct) {
-	encryptKeyMap = info
+	encryptKeysMap = info
 }
 
-func GetEncryptionKey(keyName string) *KeyInfo {
-	info := GetEncryptKeyMap()
+func GetEncryptionKey(keyName, version string) *KeyInfo {
+	info := GetEncryptKeysMap()
 	if info == nil {
 		return nil
 	}
 	keyInfoVersionMap, ok := info.AvailableKeys[keyName]
 	if !ok {
 		return nil
+	}
+	if version != "" {
+		keyInfo := keyInfoVersionMap[version]
+		if keyInfo.RotateAt != nil && keyInfo.RotateAt.After(time.Now()) {
+			return &keyInfo
+		}
 	}
 	var latestKeyInfo *KeyInfo
 	for _, keyInfo := range keyInfoVersionMap {

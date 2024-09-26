@@ -28,5 +28,5 @@ func LoadKeysFromEnv() error {
 }
 
 func ListKeys() *models.EncryptStruct {
-	return models.GetEncryptInfo()
+	return models.GetEncryptKeysMap()
 }

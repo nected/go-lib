@@ -111,7 +111,7 @@ func TestLoadKeysFromEnv(t *testing.T) {
 				t.Errorf("LoadKeysFromEnv() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			info := models.GetEncryptInfo()
+			info := models.GetEncryptKeysMap()
 			if info == nil {
 				t.Errorf("GetEncryptInfo() = %v, want %v", info, &models.EncryptStruct{
 					AvailableKeys: make(map[string]map[string]models.KeyInfo),
@@ -188,7 +188,8 @@ func TestGetEncryptionKey(t *testing.T) {
 	LoadKeysFromEnv()
 	defer teardownSuite(t)
 	type args struct {
-		keyName string
+		keyName    string
+		keyVersion string
 	}
 	tests := []struct {
 		name string
@@ -198,7 +199,8 @@ func TestGetEncryptionKey(t *testing.T) {
 		{
 			name: "TestGetEncryptionKey - No errors",
 			args: args{
-				keyName: "TESTKEY",
+				keyName:    "TESTKEY",
+				keyVersion: "1",
 			},
 			want: &models.KeyInfo{
 				PrivKey:   nil,
@@ -212,7 +214,7 @@ func TestGetEncryptionKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := models.GetEncryptionKey(tt.args.keyName); got != nil {
+			if got := models.GetEncryptionKey(tt.args.keyName, tt.args.keyVersion); got != nil {
 				if got.GetName() != tt.want.GetName() {
 					t.Errorf("GetName() = %v, want %v", got.GetName(), tt.want.GetName())
 				}
