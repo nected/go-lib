@@ -14,7 +14,7 @@ import (
 	"github.com/nected/go-lib/crypto/models"
 )
 
-var validEncryptedData string
+var validEncryptedData, validEncryptedData2 string
 
 func generatePrivateKey() string {
 	privatekey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -43,17 +43,21 @@ func generatePrivateKey() string {
 func populateKeys() {
 	payload, _ := Encrypt("TESTKEY", []byte("test data"))
 	validEncryptedData = payload.String()
+	payload, _ = Encrypt("TESTKEY1", []byte("test data"))
+	validEncryptedData2 = payload.String()
 }
 
 func setupSuite(t *testing.T) func(t *testing.T) {
 	var privateKey = generatePrivateKey()
 	os.Setenv("KEY_TESTKEY_1_0", privateKey)
+	os.Setenv("KEY_TESTKEY1_2_0", privateKey)
 	os.Setenv("KEY_TESTKEYR_1_1726147578", privateKey)
 	os.Setenv("KEY_TESTKEYINVALID_1_0", "lkajds")
 
 	t.Log("setup suite")
 	return func(t *testing.T) {
 		defer os.Unsetenv("KEY_TESTKEY_1_0")
+		defer os.Unsetenv("KEY_TESTKEY1_2_0")
 		defer os.Unsetenv("KEY_TESTKEYR_1_1726147578")
 		defer os.Unsetenv("KEY_TESTKEYINVALID_1_0")
 		t.Log("teardown suite")
@@ -251,13 +255,25 @@ func TestDecrypt(t *testing.T) {
 			err:     errors.ErrInvalidData,
 		},
 		{
-			name: "Valid key",
+			name: "Valid key version 1",
 			args: args{
 				data: validEncryptedData,
 			},
 			want: &models.Payload{
 				KeyName:    "TESTKEY",
 				KeyVersion: "1",
+				Data:       "test data",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Valid key version 2",
+			args: args{
+				data: validEncryptedData2,
+			},
+			want: &models.Payload{
+				KeyName:    "TESTKEY1",
+				KeyVersion: "2",
 				Data:       "test data",
 			},
 			wantErr: false,
