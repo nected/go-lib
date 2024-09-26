@@ -16,7 +16,7 @@ const (
 type Payload struct {
 	// Payload is the data to be encrypted
 	KeyName          string  `json:"keyName"`
-	KeyVersion       string  `json:"keyVersion"`
+	KeyVersion       int     `json:"keyVersion"`
 	KeyType          KeyType `json:"keyType"`
 	Data             string  `json:"data"`
 	EncryptedData    string  `json:"encryptedData"`
@@ -30,6 +30,6 @@ func (p *Payload) String() string {
 	if p.KeyType == KeyTypeAES {
 		return p.EncryptedData
 	}
-	data := fmt.Sprintf("$%s$%s$%s", p.KeyName, p.KeyVersion, p.EncryptedData)
+	data := fmt.Sprintf("$%s$%v$%s", p.KeyName, p.KeyVersion, p.EncryptedData)
 	return base64.B64Encode([]byte(data))
 }

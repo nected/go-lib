@@ -3,8 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/nected/go-lib/crypto/models"
 )
@@ -12,10 +12,11 @@ import (
 // key config format
 
 func LoadKeysFromFile(keyName, keyPath string) error {
+	version := 1
 	info := models.GetEncryptKeysMap()
 	if info == nil {
 		info = &models.EncryptStruct{
-			AvailableKeys: make(map[string]map[string]models.KeyInfo),
+			AvailableKeys: make(map[string]map[int]models.KeyInfo),
 		}
 		models.SetEncryptKeysMap(info)
 	}
@@ -25,11 +26,10 @@ func LoadKeysFromFile(keyName, keyPath string) error {
 	}
 	publicKey := generatePublicKey(privateKey)
 	keyInfo := models.KeyInfo{
-		PrivKey:   privateKey,
-		PubKey:    publicKey,
-		Name:      keyName,
-		Version:   "1",
-		CreatedAt: time.Now(),
+		PrivKey: privateKey,
+		PubKey:  publicKey,
+		Name:    keyName,
+		Version: version,
 	}
 
 	info.AvailableKeys[keyName][keyInfo.Version] = keyInfo
@@ -46,12 +46,12 @@ func LoadKeysFromFile(keyName, keyPath string) error {
 //
 // Example:
 //   - KEY_TESTKEY_1_0
-func LoadKeysFromEnv() error {
+func LoadKeysFromEnv() (err error) {
 	info := models.GetEncryptKeysMap()
 
 	if info == nil {
 		info = &models.EncryptStruct{
-			AvailableKeys: make(map[string]map[string]models.KeyInfo),
+			AvailableKeys: make(map[string]map[int]models.KeyInfo),
 		}
 		models.SetEncryptKeysMap(info)
 	}
@@ -84,9 +84,17 @@ func LoadKeysFromEnv() error {
 
 		keyName := parts[1]
 
-		keyVersion := "1"
+		keyVersion := 1
 		if len(parts) >= 3 {
-			keyVersion = parts[2]
+			keyVersionStr := parts[2]
+			if keyVersionStr != "" {
+				// convert to int
+				keyVersion, err = strconv.Atoi(keyVersionStr)
+				if err != nil {
+					// invalid key version
+					continue
+				}
+			}
 		}
 
 		privateKey, err := loadPrivateKey([]byte(value))
@@ -101,15 +109,14 @@ func LoadKeysFromEnv() error {
 		}
 
 		if _, ok := info.AvailableKeys[keyName]; !ok {
-			info.AvailableKeys[keyName] = make(map[string]models.KeyInfo)
+			info.AvailableKeys[keyName] = make(map[int]models.KeyInfo)
 		}
 
 		info.AvailableKeys[keyName][keyVersion] = models.KeyInfo{
-			Name:      keyName,
-			Version:   keyVersion,
-			CreatedAt: time.Now(),
-			PrivKey:   privateKey,
-			PubKey:    generatePublicKey(privateKey),
+			Name:    keyName,
+			Version: keyVersion,
+			PrivKey: privateKey,
+			PubKey:  generatePublicKey(privateKey),
 		}
 
 	}

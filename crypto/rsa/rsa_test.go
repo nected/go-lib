@@ -73,16 +73,16 @@ func Test_parseData(t *testing.T) {
 		name  string
 		args  args
 		want  string
-		want1 string
+		want1 int
 		want2 string
 	}{
 		{
 			name: "Test 1",
 			args: args{
-				data: "$keyName$keyVersion$encryptedData",
+				data: "$keyName$1$encryptedData",
 			},
 			want:  "keyName",
-			want1: "keyVersion",
+			want1: 1,
 			want2: "encryptedData",
 		},
 	}
@@ -136,7 +136,7 @@ func TestEncrypt(t *testing.T) {
 			},
 			want: &models.Payload{
 				KeyName:    "TESTKEY",
-				KeyVersion: "1",
+				KeyVersion: 1,
 				KeyType:    models.KeyTypeRSA,
 				Data:       "test data",
 				// EncryptedData will be checked separately
@@ -163,7 +163,7 @@ func TestEncrypt(t *testing.T) {
 			},
 			want: &models.Payload{
 				KeyName:       "TESTKEY",
-				KeyVersion:    "1",
+				KeyVersion:    1,
 				KeyType:       models.KeyTypeRSA,
 				Data:          "",
 				EncryptedData: "",
@@ -178,7 +178,7 @@ func TestEncrypt(t *testing.T) {
 			},
 			want: &models.Payload{
 				KeyName:       "",
-				KeyVersion:    "",
+				KeyVersion:    0,
 				KeyType:       "",
 				Data:          "JFRFU1RLRVkkMSRhbHJlYWR5RW5jcnlwdGVk",
 				EncryptedData: "JFRFU1RLRVkkMSRhbHJlYWR5RW5jcnlwdGVk",
@@ -261,7 +261,7 @@ func TestDecrypt(t *testing.T) {
 			},
 			want: &models.Payload{
 				KeyName:    "TESTKEY",
-				KeyVersion: "1",
+				KeyVersion: 1,
 				Data:       "test data",
 			},
 			wantErr: false,
@@ -273,7 +273,7 @@ func TestDecrypt(t *testing.T) {
 			},
 			want: &models.Payload{
 				KeyName:    "TESTKEY1",
-				KeyVersion: "2",
+				KeyVersion: 2,
 				Data:       "test data",
 			},
 			wantErr: false,

@@ -5,21 +5,19 @@ import (
 	"crypto/rsa"
 	"crypto/sha512"
 	"fmt"
-	"time"
 )
 
 type EncryptStruct struct {
-	AvailableKeys map[string]map[string]KeyInfo
+	AvailableKeys map[string]map[int]KeyInfo
 }
 
 var encryptKeysMap *EncryptStruct
 
 type KeyInfo struct {
-	PrivKey   *rsa.PrivateKey
-	PubKey    *rsa.PublicKey
-	Name      string
-	Version   string
-	CreatedAt time.Time
+	PrivKey *rsa.PrivateKey
+	PubKey  *rsa.PublicKey
+	Name    string
+	Version int
 }
 
 func (k *KeyInfo) GetPrivKey() *rsa.PrivateKey {
@@ -46,24 +44,16 @@ func (k *KeyInfo) SetName(name string) {
 	k.Name = name
 }
 
-func (k *KeyInfo) GetVersion() string {
+func (k *KeyInfo) GetVersion() int {
 	return k.Version
 }
 
-func (k *KeyInfo) SetVersion(version string) {
+func (k *KeyInfo) SetVersion(version int) {
 	k.Version = version
 }
 
 func (k *KeyInfo) KeyNameVersion() string {
-	return fmt.Sprintf("%s_%s", k.GetName(), k.GetVersion())
-}
-
-func (k *KeyInfo) GetCreatedAt() time.Time {
-	return k.CreatedAt
-}
-
-func (k *KeyInfo) SetCreatedAt(createdAt time.Time) {
-	k.CreatedAt = createdAt
+	return fmt.Sprintf("%s_%v", k.GetName(), k.GetVersion())
 }
 
 func (k *KeyInfo) Encrypt(data []byte) ([]byte, error) {
@@ -112,7 +102,7 @@ func SetEncryptKeysMap(info *EncryptStruct) {
 	encryptKeysMap = info
 }
 
-func GetEncryptionKey(keyName, version string) *KeyInfo {
+func GetEncryptionKey(keyName string, version int) *KeyInfo {
 	info := GetEncryptKeysMap()
 	if info == nil {
 		return nil
@@ -121,7 +111,7 @@ func GetEncryptionKey(keyName, version string) *KeyInfo {
 	if !ok {
 		return nil
 	}
-	if version != "" {
+	if version > 0 {
 		keyInfo := keyInfoVersionMap[version]
 		return &keyInfo
 	}
@@ -130,7 +120,8 @@ func GetEncryptionKey(keyName, version string) *KeyInfo {
 		if latestKeyInfo == nil {
 			latestKeyInfo = &keyInfo
 		}
-		if keyInfo.GetCreatedAt().After(latestKeyInfo.GetCreatedAt()) {
+
+		if keyInfo.GetVersion() > latestKeyInfo.GetVersion() {
 			latestKeyInfo = &keyInfo
 		}
 	}

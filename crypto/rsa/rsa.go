@@ -2,6 +2,7 @@ package rsa
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/nected/go-lib/crypto/base64"
 	"github.com/nected/go-lib/crypto/errors"
@@ -27,7 +28,7 @@ func Encrypt(keyName string, data []byte) (*models.Payload, error) {
 			AlreadyEncrypted: true,
 		}, nil
 	}
-	keyInfo := models.GetEncryptionKey(keyName, "")
+	keyInfo := models.GetEncryptionKey(keyName, 0)
 	if keyInfo == nil {
 		// if key not found return stringfied data
 		return &models.Payload{
@@ -132,10 +133,12 @@ func Decrypt(data string) (*models.Payload, error) {
 // - keyName: The extracted key name.
 // - keyVersion: The extracted key version.
 // - encryptedData: The extracted encrypted data.
-func parseData(data string) (string, string, string) {
+func parseData(data string) (string, int, string) {
 	keyName := ""
-	keyVersion := ""
+	keyVersion := 0
 	encryptedData := ""
+
+	var err error
 
 	for i := 1; i < len(data); i++ {
 		if data[i] == '$' {
@@ -143,8 +146,11 @@ func parseData(data string) (string, string, string) {
 				keyName = data[1:i]
 				continue
 			}
-			if keyVersion == "" {
-				keyVersion = data[len(keyName)+2 : i]
+			if keyVersion == 0 {
+				keyVersionStr := data[len(keyName)+2 : i]
+				if keyVersion, err = strconv.Atoi(keyVersionStr); err != nil {
+					keyVersion = 0
+				}
 				encryptedData = data[i+1:]
 				break
 			}

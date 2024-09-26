@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/nected/go-lib/crypto/config"
 	"github.com/nected/go-lib/crypto/models"
@@ -61,7 +60,7 @@ func TestLoadKeysFromEnv(t *testing.T) {
 		wantErr     bool
 		keyName     string
 		keyExists   bool
-		version     string
+		version     int
 		privKeyNull bool
 		pubKeyNull  bool
 	}{
@@ -70,7 +69,7 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			wantErr:     false,
 			keyName:     "TESTKEY",
 			keyExists:   true,
-			version:     "1",
+			version:     1,
 			privKeyNull: false,
 			pubKeyNull:  false,
 		},
@@ -79,7 +78,7 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			wantErr:     false,
 			keyName:     "TESTKEY",
 			keyExists:   true,
-			version:     "2",
+			version:     2,
 			privKeyNull: false,
 			pubKeyNull:  false,
 		},
@@ -88,7 +87,7 @@ func TestLoadKeysFromEnv(t *testing.T) {
 			wantErr:     false,
 			keyName:     "TESTKEYA",
 			keyExists:   false,
-			version:     "1",
+			version:     1,
 			privKeyNull: true,
 			pubKeyNull:  true,
 		},
@@ -156,7 +155,7 @@ func TestGetEncryptionKey(t *testing.T) {
 	defer teardownSuite(t)
 	type args struct {
 		keyName    string
-		keyVersion string
+		keyVersion int
 	}
 	tests := []struct {
 		name string
@@ -167,14 +166,13 @@ func TestGetEncryptionKey(t *testing.T) {
 			name: "TestGetEncryptionKey - No errors",
 			args: args{
 				keyName:    "TESTKEY",
-				keyVersion: "1",
+				keyVersion: 1,
 			},
 			want: &models.KeyInfo{
-				PrivKey:   nil,
-				PubKey:    nil,
-				Name:      "TESTKEY",
-				Version:   "1",
-				CreatedAt: time.Time{},
+				PrivKey: nil,
+				PubKey:  nil,
+				Name:    "TESTKEY",
+				Version: 1,
 			},
 		},
 	}
@@ -234,8 +232,7 @@ func TestEncryptRSA(t *testing.T) {
 				data:    []byte("data"),
 			},
 			want: &models.Payload{
-				Data:          "data",
-				EncryptedData: "9zE+AFpfb3PhIfdaOlPxXZAVHb3oEiTxMYcIoDuaYVs=",
+				Data: "data",
 			},
 			wantErr: false,
 		},
@@ -245,16 +242,9 @@ func TestEncryptRSA(t *testing.T) {
 				keyName: "TESTKEYINVALID",
 				data:    []byte("data"),
 			},
-			want:    nil,
-			wantErr: false,
-		},
-		{
-			name: "TestEncryptRSA - plain text",
-			args: args{
-				keyName: "TESTKEYINVALID",
-				data:    []byte("data"),
+			want: &models.Payload{
+				Data: "data",
 			},
-			want:    &models.Payload{Data: "data"},
 			wantErr: false,
 		},
 	}
@@ -263,6 +253,11 @@ func TestEncryptRSA(t *testing.T) {
 			got, err := EncryptRSA(tt.args.keyName, tt.args.data)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("EncryptRSA() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr && (got == nil || got.Data != tt.want.Data) {
+				t.Errorf("EncryptRSA() = %v, want %v", got, tt.want)
 				return
 			}
 
@@ -279,6 +274,12 @@ func TestEncryptRSA(t *testing.T) {
 
 				if payload.Data != tt.want.Data {
 					t.Errorf("EncryptRSA() = %v, want %v", payload.Data, tt.want.Data)
+				}
+
+				if got.KeyName != "" {
+					if got.EncryptedData == "" {
+						t.Errorf("Invalid encrypted data")
+					}
 				}
 			}
 		})
