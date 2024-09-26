@@ -12,7 +12,7 @@ type EncryptStruct struct {
 	AvailableKeys map[string]map[string]KeyInfo
 }
 
-var encryptInfo *EncryptStruct
+var encryptKeyMap *EncryptStruct
 
 type KeyInfo struct {
 	PrivKey   *rsa.PrivateKey
@@ -114,11 +114,11 @@ func (k *KeyInfo) Decrypt(data []byte) ([]byte, error) {
 }
 
 func GetEncryptKeyMap() *EncryptStruct {
-	return encryptInfo
+	return encryptKeyMap
 }
 
 func SetEncryptKeysMap(info *EncryptStruct) {
-	encryptInfo = info
+	encryptKeyMap = info
 }
 
 func GetEncryptionKey(keyName string) *KeyInfo {
