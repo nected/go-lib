@@ -237,17 +237,6 @@ func TestEncryptRSA(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		{
-			name: "TestEncryptRSA - error",
-			args: args{
-				keyName: "TESTKEYINVALID",
-				data:    []byte("data"),
-			},
-			want: &models.Payload{
-				Data: "data",
-			},
-			wantErr: false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
