@@ -85,16 +85,15 @@ func Decrypt(data string) (*models.Payload, error) {
 		return &p, nil
 	}
 
-	// if data is not encrypted return as is
-	if decodedData[0] != '$' {
-		p.Data = data
-		return &p, nil
-	}
-
 	// split data into keyName, keyVersion and encryptedData
 	// $keyName$keyVersion$encryptedData
 
 	keyName, keyVersion, encryptedData := parseData(decodedData)
+
+	if keyName == "" || keyVersion == 0 || encryptedData == "" {
+		p.Data = data
+		return &p, nil
+	}
 
 	keyInfo := models.GetEncryptionKey(keyName, keyVersion)
 
@@ -141,6 +140,12 @@ func parseData(data string) (string, int, string) {
 
 	var err error
 
+	// if data is not encrypted return as is
+	if data[0] != '$' {
+		encryptedData = data
+		return keyName, keyVersion, encryptedData
+	}
+
 	for i := 1; i < len(data); i++ {
 		if data[i] == '$' {
 			if keyName == "" {
@@ -151,6 +156,7 @@ func parseData(data string) (string, int, string) {
 				keyVersionStr := data[len(keyName)+2 : i]
 				if keyVersion, err = strconv.Atoi(keyVersionStr); err != nil {
 					keyVersion = 0
+					break
 				}
 				encryptedData = data[i+1:]
 				break
@@ -176,6 +182,6 @@ func alreadyEncrypted(data []byte) bool {
 	if err != nil {
 		return false
 	}
-	keyName, _, _ := parseData(decodedData)
-	return keyName != ""
+	keyName, keyVersion, encryptedData := parseData(decodedData)
+	return keyName != "" && keyVersion != 0 && encryptedData != ""
 }

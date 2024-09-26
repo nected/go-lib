@@ -237,6 +237,28 @@ func TestEncryptRSA(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "TestEncryptRSA - similar pattern",
+			args: args{
+				keyName: "TESTKEY",
+				data:    []byte("JGFiY2QkZGVmZyRsYWtzamxhc2RqYWxzZGo="), //$abcd$defg$laksjlasdjalsdj
+			},
+			want: &models.Payload{
+				Data: "JGFiY2QkZGVmZyRsYWtzamxhc2RqYWxzZGo=",
+			},
+			wantErr: false,
+		},
+		{
+			name: "TestEncryptRSA - Conflicting pattern",
+			args: args{
+				keyName: "TESTKEY",
+				data:    []byte("QCRhYmNkJGRlZmckbGFrc2psYXNkamFsc2Rq"), //@$abcd$defg$laksjlasdjalsdj
+			},
+			want: &models.Payload{
+				Data: "QCRhYmNkJGRlZmckbGFrc2psYXNkamFsc2Rq",
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
