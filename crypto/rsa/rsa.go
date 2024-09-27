@@ -1,7 +1,6 @@
 package rsa
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/nected/go-lib/crypto/base64"
@@ -73,8 +72,10 @@ func Encrypt(keyName string, data []byte) (*models.Payload, error) {
 //  7. Decrypts the encryptedData using the retrieved key information.
 //  8. Constructs and returns a Payload object containing the decrypted data and other relevant information.
 func Decrypt(data string) (*models.Payload, error) {
-	p := models.Payload{}
-	if data == "" {
+	p := models.Payload{
+		Data: data,
+	}
+	if p.Data == "" {
 		return nil, errors.ErrEmptyData
 	}
 
@@ -87,18 +88,16 @@ func Decrypt(data string) (*models.Payload, error) {
 
 	// split data into keyName, keyVersion and encryptedData
 	// $keyName$keyVersion$encryptedData
-
 	keyName, keyVersion, encryptedData := parseData(decodedData)
 
 	if keyName == "" || keyVersion == 0 || encryptedData == "" {
-		p.Data = data
 		return &p, nil
 	}
 
 	keyInfo := models.GetEncryptionKey(keyName, keyVersion)
 
 	if keyInfo == nil {
-		return nil, fmt.Errorf("key %s not found", keyName)
+		return &p, nil
 	}
 
 	encryptedData, err = base64.B64Decode(encryptedData)
@@ -139,6 +138,10 @@ func parseData(data string) (string, int, string) {
 	encryptedData := ""
 
 	var err error
+
+	if len(data) == 0 {
+		return keyName, keyVersion, encryptedData
+	}
 
 	// if data is not encrypted return as is
 	if data[0] != '$' {
