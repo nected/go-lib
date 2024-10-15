@@ -1,0 +1,25 @@
+# Config file for go-test-coverage github action.
+
+profile: cover.short.profile,cover.long.profile
+local-prefix: "github.com/nected/go-lib"
+threshold:
+  file: 60
+  package: 70
+  total: 75
+override:
+  - threshold: 0
+    path: logger/options.go$
+  - threshold: 30
+    path: logger/logger.go$
+  - threshold: 40
+    path: crypto/crypto.go$
+  - threshold: 28
+    path: ^logger$
+  - threshold: 60
+    path: ^crypto/config$
+  - threshold: 40
+    path: ^crypto$
+
+exclude:
+  paths:
+    - main\.go$
