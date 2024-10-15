@@ -1,6 +1,9 @@
 package date
 
-import "time"
+import (
+	"time"
+	"unicode"
+)
 
 // newParseError creates a new ParseError.
 // The provided value and valueElem are cloned to avoid escaping their values.
@@ -40,7 +43,7 @@ func parseCustomTime(input, format string) (time.Time, error) {
 	// var parsedString string
 	var lastPos int
 	for i := 0; i < len(format); i++ {
-		if format[i] == '/' {
+		if !unicode.IsLetter(rune(format[i])) && !unicode.IsNumber(rune(format[i])) {
 			value := input[lastPos:i]
 			key := format[lastPos:i]
 
