@@ -27,6 +27,10 @@ func Parse(input, format string) (time.Time, error) {
 	return val, nil
 }
 
+func Format(t time.Time, format string) (string, error) {
+	return formatCustomTime(t, format)
+}
+
 // parse date in following formats
 //
 // dd/mm/yyyy
@@ -61,4 +65,20 @@ func parseCustomTime(input, format string) (time.Time, error) {
 		}
 	}
 	return timeStruct.ToTime(), nil
+}
+
+func formatCustomTime(t time.Time, format string) (string, error) {
+	if len(format) == 0 || format == "" {
+		format = time.RFC3339
+	}
+	if result := t.Format(format); result != "" && result != format {
+		return result, nil
+	}
+	timeStruct := NewTimeStruct()
+	timeStruct.FromTime(t)
+	formattedDate := timeStruct.Format(format)
+	if formattedDate == "" {
+		return "", newParseError(format, t.String(), "", "", "failed to format date")
+	}
+	return formattedDate, nil
 }
