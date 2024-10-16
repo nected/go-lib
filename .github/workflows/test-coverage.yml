@@ -40,6 +40,8 @@ jobs:
       actions:       read  # to download code coverage results from "test" job
       pull-requests: write # write permission needed to comment on PR
     steps:
+      - name: checkout
+        uses: actions/checkout@v4
       - uses: fgrosse/go-coverage-report@v1.2.0 # Consider using a Git revision for maximum security
         with:
           coverage-artifact-name: "code-coverage" # can be omitted if you used this default value
