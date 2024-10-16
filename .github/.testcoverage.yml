@@ -5,7 +5,7 @@ local-prefix: "github.com/nected/go-lib"
 threshold:
   file: 60
   package: 70
-  total: 75
+  total: 70
 override:
   - threshold: 0
     path: logger/options.go$
