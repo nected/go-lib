@@ -174,6 +174,11 @@ func (t *TimeStruct) getValue(key string) string {
 		return secondString
 	case "ns":
 		return strconv.Itoa(t.nanosec)
+	case "TT":
+		if t.hour < 12 {
+			return "AM"
+		}
+		return "PM"
 	default:
 		return ""
 	}

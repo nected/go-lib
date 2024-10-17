@@ -69,6 +69,11 @@ func TestFormat(t *testing.T) {
 		{time.Date(2023, 10, 1, 0, 0, 0, 0, time.UTC), "2006-01-02", "2023-10-01", false},
 		{time.Date(2023, 10, 1, 0, 0, 0, 0, time.UTC), "02/01/2006", "01/10/2023", false},
 		{time.Date(2023, 10, 1, 15, 4, 5, 0, time.UTC), time.RFC3339, "2023-10-01T15:04:05Z", false},
+		{time.Date(2023, 10, 1, 15, 4, 5, 0, time.UTC), "hh TT", "03 PM", false},
+		{time.Date(2023, 10, 1, 5, 4, 5, 0, time.UTC), "hh TT", "05 AM", false},
+		{time.Date(2023, 10, 1, 15, 4, 5, 0, time.UTC), "HH TT", "15 PM", false},
+		{time.Date(2023, 10, 1, 5, 4, 5, 0, time.UTC), "HH TT", "05 AM", false},
+
 		{time.Date(2023, 10, 1, 15, 4, 5, 0, time.UTC), "", "2023-10-01T15:04:05Z", false},
 
 		{time.Date(2023, 10, 1, 0, 0, 0, 0, time.UTC), "dd/mm/yyyy", "01/10/2023", false},
