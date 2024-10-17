@@ -76,9 +76,5 @@ func formatCustomTime(t time.Time, format string) (string, error) {
 	}
 	timeStruct := NewTimeStruct()
 	timeStruct.FromTime(t)
-	formattedDate := timeStruct.Format(format)
-	if formattedDate == "" {
-		return "", newParseError(format, t.String(), "", "", "failed to format date")
-	}
-	return formattedDate, nil
+	return timeStruct.Format(format)
 }

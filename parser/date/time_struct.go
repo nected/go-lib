@@ -70,15 +70,20 @@ func (t *TimeStruct) FromTime(time time.Time) {
 }
 
 // Format
-func (t *TimeStruct) Format(format string) string {
+func (t *TimeStruct) Format(format string) (string, error) {
 	var result strings.Builder
 	var lastPos int
 	for i := 0; i < len(format); i++ {
 		if !unicode.IsLetter(rune(format[i])) && !unicode.IsNumber(rune(format[i])) {
 			key := format[lastPos:i]
+			if key == "" {
+				result.WriteByte(format[i])
+				lastPos = i + 1
+				continue
+			}
 			val := t.getValue(key)
 			if val == "" {
-				return ""
+				return "", newParseError(format, val, key, val, errors.ErrInvalidDateFormat.Error())
 			}
 			result.WriteString(t.getValue(key))
 			result.WriteByte(format[i])
@@ -89,11 +94,11 @@ func (t *TimeStruct) Format(format string) string {
 		key := format[lastPos:]
 		val := t.getValue(key)
 		if val == "" {
-			return ""
+			return "", newParseError(format, val, key, val, errors.ErrInvalidDateFormat.Error())
 		}
 		result.WriteString(t.getValue(key))
 	}
-	return result.String()
+	return result.String(), nil
 }
 
 func (t *TimeStruct) getValue(key string) string {

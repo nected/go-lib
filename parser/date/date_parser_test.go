@@ -94,6 +94,9 @@ func TestFormat(t *testing.T) {
 		{time.Date(2023, 10, 01, 0, 0, 0, 0, time.UTC), "dd/mmm/yyyy", "01/Oct/2023", false},
 		{time.Date(2023, 11, 01, 0, 0, 0, 0, time.UTC), "dd/mmm/yyyy", "01/Nov/2023", false},
 		{time.Date(2023, 12, 01, 0, 0, 0, 0, time.UTC), "dd/mmm/yyyy", "01/Dec/2023", false},
+		{time.Date(2023, 12, 01, 0, 0, 0, 0, time.UTC), "dd/ mmm/ yyyy", "01/ Dec/ 2023", false},
+		{time.Date(2023, 12, 01, 0, 0, 0, 0, time.UTC), "dd mmm yyyy", "01 Dec 2023", false},
+		{time.Date(2023, 12, 01, 0, 0, 0, 0, time.UTC), "dd mmm yyyy", "01 Dec 2023", false},
 	}
 
 	for _, test := range tests {
