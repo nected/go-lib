@@ -24,39 +24,6 @@ func NewTimeStruct() *TimeStruct {
 	return &TimeStruct{}
 }
 
-func (t *TimeStruct) Set(key string, value string) (err error) {
-	switch key {
-	case "dd":
-		t.date, err = strconv.Atoi(value)
-	case "mm":
-		t.month, err = strconv.Atoi(value)
-	case "mmm":
-		month, err := parseMonthName(value)
-		if err != nil {
-			return err
-		}
-		t.month = int(month)
-	case "yy", "yyyy":
-		t.year, err = strconv.Atoi(value)
-	case "hh", "HH":
-		t.hour, err = strconv.Atoi(value)
-	case "MM":
-		t.minute, err = strconv.Atoi(value)
-	case "ss":
-		t.second, err = strconv.Atoi(value)
-	case "ns":
-		t.nanosec, err = strconv.Atoi(value)
-	default:
-		err = errors.ErrInvalidDateFormat
-	}
-	return
-}
-
-// To Time
-func (t *TimeStruct) ToTime() time.Time {
-	return time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, time.UTC)
-}
-
 // From Time
 func (t *TimeStruct) FromTime(time time.Time) {
 	t.date = time.Day()
@@ -111,9 +78,9 @@ func (t *TimeStruct) getValue(key string) string {
 			dateStr = "0" + dateStr
 		}
 		return dateStr
-	case "ddd":
+	case "ddd", "DDD":
 		return time.Weekday(time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Weekday()).String()[:3]
-	case "DDD", "dddd":
+	case "dddd", "DDDD":
 		return time.Weekday(time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Weekday()).String()
 	case "m":
 		return strconv.Itoa(t.month)
@@ -127,6 +94,8 @@ func (t *TimeStruct) getValue(key string) string {
 		return time.Month(t.month).String()[:3]
 	case "mmmm":
 		return time.Month(t.month).String()
+	case "y":
+		return strconv.Itoa(t.year % 100)
 	case "yy":
 		yearStr := strconv.Itoa(t.year % 100)
 		if len(yearStr) == 1 {
@@ -148,7 +117,7 @@ func (t *TimeStruct) getValue(key string) string {
 			hourStr = "0" + hourStr
 		}
 		return hourStr
-	case "H":
+	case "H", "g":
 		return strconv.Itoa(t.hour)
 	case "HH":
 		hourStr := strconv.Itoa(t.hour)
@@ -174,48 +143,39 @@ func (t *TimeStruct) getValue(key string) string {
 		return secondString
 	case "ns":
 		return strconv.Itoa(t.nanosec)
+	case "t":
+		if t.hour < 12 {
+			return "a"
+		}
+		return "p"
+	case "T":
+		if t.hour < 12 {
+			return "A"
+		}
+		return "P"
+	case "tt":
+		if t.hour < 12 {
+			return "am"
+		}
+		return "pm"
 	case "TT":
 		if t.hour < 12 {
 			return "AM"
 		}
 		return "PM"
+	case "Z":
+		return t.timeZone.String()
+	case "l": // millisconds three digits
+		return strconv.Itoa(t.nanosec / 1000000)
+	case "L": // milliseconds two digits
+		return strconv.Itoa(t.nanosec / 10000000)
+	case "o": // timezone offset
+		_, offset := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Zone()
+		return strconv.Itoa(offset)
+	case "p": // timezone offset with colon
+		_, offset := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Zone()
+		return strconv.Itoa(offset / 3600)
 	default:
 		return ""
-	}
-}
-
-// function to parse month name to time.Month
-// all comparison should be case insensitive
-// returns parser error if month name is invalid
-// example: Jan -> 1, January -> 1
-func parseMonthName(monthName string) (time.Month, error) {
-	monthName = strings.ToLower(monthName)
-	switch monthName {
-	case "jan", "january":
-		return time.January, nil
-	case "feb", "february":
-		return time.February, nil
-	case "mar", "march":
-		return time.March, nil
-	case "apr", "april":
-		return time.April, nil
-	case "may":
-		return time.May, nil
-	case "jun", "june":
-		return time.June, nil
-	case "jul", "july":
-		return time.July, nil
-	case "aug", "august":
-		return time.August, nil
-	case "sep", "september":
-		return time.September, nil
-	case "oct", "october":
-		return time.October, nil
-	case "nov", "november":
-		return time.November, nil
-	case "dec", "december":
-		return time.December, nil
-	default:
-		return 0, errors.ErrInvalidDateFormat
 	}
 }
