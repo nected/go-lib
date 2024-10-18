@@ -49,10 +49,10 @@ func Format(t time.Time, format string) (string, error) {
 
 // parse date in following formats
 func parseCustomTime(input, format string) (time.Time, error) {
+	var c carbon.Carbon
 	if len(input) == 0 {
 		return time.Time{}, newParseError(format, input, "", "", errors.ErrEmptyInput.Error())
 	}
-	c := carbon.NewCarbon()
 	if len(format) == 0 || format == "" {
 		c = carbon.Parse(input)
 		if c.Error == nil {
