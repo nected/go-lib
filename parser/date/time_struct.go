@@ -142,7 +142,15 @@ func (t *TimeStruct) getValue(key string) string {
 		}
 		return secondString
 	case "ns":
-		return strconv.Itoa(t.nanosec)
+		nsLength := 9
+		ns := strconv.Itoa(t.nanosec)
+		if len(ns) < nsLength {
+			len := nsLength - len(ns)
+			for i := 0; i < len; i++ {
+				ns = "0" + ns
+			}
+		}
+		return ns
 	case "t":
 		if t.hour < 12 {
 			return "a"
@@ -169,12 +177,12 @@ func (t *TimeStruct) getValue(key string) string {
 		return strconv.Itoa(t.nanosec / 1000000)
 	case "L": // milliseconds two digits
 		return strconv.Itoa(t.nanosec / 10000000)
-	case "o": // timezone offset
-		_, offset := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Zone()
-		return strconv.Itoa(offset)
-	case "p": // timezone offset with colon
-		_, offset := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Zone()
-		return strconv.Itoa(offset / 3600)
+	case "o": // timezone offset as +HHMM or -HHMM
+		format := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Format("-0700")
+		return format
+	case "p": // timezone offset with colon as +HH:MM or -HH:MM
+		format := time.Date(t.year, time.Month(t.month), t.date, t.hour, t.minute, t.second, t.nanosec, t.timeZone).Format("-07:00")
+		return format
 	default:
 		return ""
 	}
