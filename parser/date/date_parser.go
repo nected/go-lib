@@ -57,7 +57,7 @@ func parseCustomTime(input, format string) (time.Time, error) {
 		}
 	}
 
-	layout := convertToGoFormat(format)
+	input, layout := handleTimeString(input, format)
 
 	c = carbon.ParseByLayout(input, layout)
 	if c.Error != nil {

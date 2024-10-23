@@ -21,9 +21,9 @@ func TestParse(t *testing.T) {
 		{"April 05, 2023", "mmmm dd, yyyy", time.Date(2023, 04, 05, 00, 00, 00, 00, time.UTC), false},
 		{"April 05, 2023 +0530", "mmmm dd, yyyy o", time.Date(2023, 04, 05, 00, 00, 00, 00, customTimeZone), false},
 		{"Apr 05, 2023 +05:30", "mmm dd, yyyy p", time.Date(2023, 04, 05, 00, 00, 00, 00, customTimeZone), false},
-		{"2023-04-05 11:30 AM", "yyyy-mm-dd hh:MM TT", time.Date(2023, 04, 05, 11, 30, 00, 00, time.UTC), false},
+		{"2023-04-05 11:30 AM", "yyyy-mm-dd hh:MM AA", time.Date(2023, 04, 05, 11, 30, 00, 00, time.UTC), false},
 		{"2023-04-05 18:30", "yyyy-mm-dd HH:MM", time.Date(2023, 04, 05, 18, 30, 00, 00, time.UTC), false},
-		{"2023-04-05 06:30 am", "yyyy-mm-dd HH:MM t", time.Date(2023, 04, 05, 06, 30, 00, 00, time.UTC), false},
+		{"2023-04-05 06:30 am", "yyyy-mm-dd HH:MM aa", time.Date(2023, 04, 05, 06, 30, 00, 00, time.UTC), false},
 
 		{"2023-04-05 12:30:45.1231", "yyyy-mm-dd HH:MM:ss", time.Date(2023, 04, 05, 12, 30, 45, 123100000, time.UTC), false},
 		{"23-4-5 12:05:45.1231", "yy-m-d HH:MM:ss", time.Date(2023, 04, 05, 12, 5, 45, 123100000, time.UTC), false},
@@ -63,6 +63,13 @@ func TestParse(t *testing.T) {
 		{"01/Jan/2023", "dd/mmm/yyya", time.Time{}, true},
 		{"01/Jab/2023", "dd/mmm/yyya", time.Time{}, true},
 		{"", "dd/MMM/yyyy", time.Time{}, true},
+		{"2023-10-01 PM 03:04:05 UTC", "yyyy-mm-dd A hh:MM:ss Z", time.Date(2023, 10, 1, 15, 4, 5, 0, time.UTC), false},
+		{"2023-10-01T03:04:05Z", "yyyy-mm-ddThh:MM:ssZ", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
+		{"2023-10-01T03:04:05 UTC", "yyyy-mm-ddThh:MM:ssZ", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
+		{"2023-10-01T03:04:05Z", "yyyy-mm-ddThh:MM:ssZ", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
+		{"2023-10-01 T 03:04:05Z", "yyyy-mm-dd T hh:MM:ssZ", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
+		{"01-10-2023T03:04:05Z", "dd-mm-yyyyThh:MM:ssZ", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
+		{"01-10-2023T03:04:05 +0000", "dd-mm-yyyyThh:MM:ss o", time.Date(2023, 10, 1, 03, 4, 5, 0, time.UTC), false},
 	}
 
 	for _, test := range tests {
@@ -188,13 +195,13 @@ func TestFormatMap2Format(t *testing.T) {
 		{"dd/mmm/yyyy", "d/M/Y"},
 		{"yyyy-mm-dd", "Y-m-d"},
 		{"hh:MM:ss", "h:i:s"},
-		{"hh TT", "h A"},
-		{"HH TT", "H A"},
+		{"hh AA", "h A"},
+		{"HH AA", "H A"},
 		{"dd/MMM/yyyy", "d/MMM/Y"},
 		{"dd/mmm/yyya", "d/M/yyya"},
 		{"dd/mmm/yyyy hh:MM:ss.ns", "d/M/Y h:i:s.ns"},
 		{"dd/mmmm/yyyy hh:MM:ss.ns", "d/F/Y h:i:s.ns"},
-		{"yyyy-mm dd, T hh:MM:ss Z07:00", "Y-m d, A h:i:s Z07:00"},
+		{"yyyy-mm dd, A hh:MM:ss Z07:00", "Y-m d, A h:i:s Z07:00"},
 	}
 
 	for _, test := range tests {
@@ -215,13 +222,13 @@ func TestFormat2Layout(t *testing.T) {
 		{"dd/mmm/yyyy", "02/Jan/2006"},
 		{"yyyy-mm-dd", "2006-01-02"},
 		{"hh:MM:ss", "03:04:05"},
-		{"hh TT", "03 PM"},
-		{"HH TT", "15 PM"},
+		{"hh AA", "03 PM"},
+		{"HH AA", "15 PM"},
 		{"dd/MMM/yyyy", "02/JanJanJan/2006"},
 		{"dd/mmm/yyya", "02/Jan/060606pm"},
 		{"dd/mmm/yyyy hh:MM:ss", "02/Jan/2006 03:04:05"},
 		{"dd/mmmm/yyyy hh:MM:ss", "02/January/2006 03:04:05"},
-		{"yyyy-mm dd, T hh:MM:ss -07:00", "2006-01 02, PM 03:04:05 -07:00"},
+		{"yyyy-mm dd, A hh:MM:ss -07:00", "2006-01 02, PM 03:04:05 -07:00"},
 		{"mmmm dd, yyyy +05:30", "January 02, 2006 +05:30"},
 	}
 

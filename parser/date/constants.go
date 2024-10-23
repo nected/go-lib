@@ -2,6 +2,7 @@ package date
 
 import (
 	"bytes"
+	"strings"
 	"unicode"
 )
 
@@ -57,10 +58,10 @@ var goFormatMap = map[string]byte{
 	"p":    'P',
 	"s":    's',
 	"ss":   's',
-	"t":    'a',
-	"tt":   'a',
-	"T":    'A',
-	"TT":   'A',
+	"a":    'a',
+	"aa":   'a',
+	"A":    'A',
+	"AA":   'A',
 	"Z":    'T',
 }
 
@@ -77,9 +78,7 @@ func formatMap2format(format string) string {
 				buffer.WriteString(key)
 			}
 			separator := format[i]
-			// if len(separator) > 0 {
 			buffer.WriteByte(separator)
-			// }
 			lastPos = i + 1
 		}
 	}
@@ -112,4 +111,55 @@ func convertToGoFormat(format string) string {
 		}
 	}
 	return buffer.String()
+}
+
+func handleTimeString(input, format string) (string, string) {
+	if len(input) == 0 {
+		return "", ""
+	}
+	if len(format) == 0 || format == "" {
+		return input, ""
+	}
+	input = replaceTimeSeparator(input, true)
+	format = replaceTimeSeparator(format, false)
+
+	// add space before Z so that it can be parsed correctly
+	for i := 0; i < len(input); i++ {
+		if input[i] == 'Z' {
+			f := input[i:]
+			f = strings.ReplaceAll(f, "Z", "")
+			input = input[:i] + " UTC" + f
+			break
+		}
+	}
+	for i := 0; i < len(format); i++ {
+		if format[i] == 'Z' {
+			format = format[:i] + " " + format[i:]
+			break
+		}
+	}
+	return input, convertToGoFormat(format)
+}
+
+func replaceTimeSeparator(input string, numCheck bool) string {
+	inputBuffer := bytes.NewBuffer(nil)
+	for i := 0; i < len(input); i++ {
+		char := input[i]
+		if char != 'T' {
+			inputBuffer.WriteByte(char)
+			continue
+		}
+		prevChar := input[i-1]
+		nextChar := byte('A')
+		if i+1 < len(input) {
+			nextChar = input[i+1]
+		}
+
+		if numCheck && (unicode.IsLetter(rune(prevChar)) || unicode.IsLetter(rune(nextChar))) {
+			inputBuffer.WriteByte(char)
+		} else {
+			inputBuffer.WriteByte(' ')
+		}
+	}
+	return inputBuffer.String()
 }
