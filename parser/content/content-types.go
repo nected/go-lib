@@ -8,8 +8,8 @@ import (
 )
 
 func init() {
-	RegisterParserType("application/json", &jsonParser{})
-	RegisterParserType("application/xml", &xmlParser{})
+	registerParserType("application/json", &jsonParser{})
+	registerParserType("application/xml", &xmlParser{})
 }
 
 type jsonParser struct{}
@@ -17,17 +17,11 @@ type xmlParser struct{}
 
 // Unmarshal implements parserType.
 func (x *xmlParser) Unmarshal(data []byte, dest interface{}) error {
-	if err := validatePtr(dest); err != nil {
-		return err
-	}
-	return xml.Unmarshal(data, dest)
+	return xml.Unmarshal(data, &dest)
 }
 
 func (j *jsonParser) Unmarshal(data []byte, dest interface{}) error {
-	if err := validatePtr(dest); err != nil {
-		return err
-	}
-	return json.Unmarshal(data, dest)
+	return json.Unmarshal(data, &dest)
 }
 
 func validatePtr(data interface{}) error {
