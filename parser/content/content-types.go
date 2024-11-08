@@ -2,9 +2,10 @@ package content
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"reflect"
+
+	"github.com/clbanning/mxj"
 )
 
 func init() {
@@ -17,7 +18,12 @@ type xmlParser struct{}
 
 // Unmarshal implements parserType.
 func (x *xmlParser) Unmarshal(data []byte, dest interface{}) error {
-	return xml.Unmarshal(data, &dest)
+	resp, err := mxj.NewMapXml(data)
+	if err != nil {
+		return err
+	}
+	dest = resp
+	return nil
 }
 
 func (j *jsonParser) Unmarshal(data []byte, dest interface{}) error {

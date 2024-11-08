@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/TheZeroSlave/zapsentry v1.20.2
+	github.com/clbanning/mxj v1.8.4
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/golang-module/carbon/v2 v2.4.1
 	github.com/stretchr/testify v1.9.0
