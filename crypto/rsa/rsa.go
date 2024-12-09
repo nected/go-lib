@@ -90,7 +90,7 @@ func Decrypt(data string) (*models.Payload, error) {
 	// $keyName$keyVersion$encryptedData
 	keyName, keyVersion, encryptedData := parseData(decodedData)
 
-	if keyName == "" || keyVersion == 0 || encryptedData == "" {
+	if keyName == "" || keyVersion == 0 {
 		return &p, nil
 	}
 
@@ -185,6 +185,6 @@ func alreadyEncrypted(data []byte) bool {
 	if err != nil {
 		return false
 	}
-	keyName, keyVersion, encryptedData := parseData(decodedData)
-	return keyName != "" && keyVersion != 0 && encryptedData != ""
+	keyName, keyVersion, _ := parseData(decodedData)
+	return keyName != "" && keyVersion != 0
 }
