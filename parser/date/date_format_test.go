@@ -54,8 +54,7 @@ func TestInspectDateFormat(t *testing.T) {
 	for id, test := range tests {
 		t.Run(fmt.Sprintf("%v", id), func(t *testing.T) {
 			layout, ok := InspectDateFormat(test.val, test.dateFormat)
-			assert.Equal(t, test.expected.layout, layout)
-			assert.Equal(t, test.expected.ok, ok)
+			assert.Equal(t, test.expected, expectedT{layout, ok})
 		})
 	}
 }
@@ -107,8 +106,7 @@ func TestInspectDateTimeFormat(t *testing.T) {
 	for id, test := range tests {
 		t.Run(fmt.Sprintf("%v", id), func(t *testing.T) {
 			layout, ok := InspectDateTimeFormat(test.val, test.dateFormat)
-			assert.Equal(t, test.expected.layout, layout)
-			assert.Equal(t, test.expected.ok, ok)
+			assert.Equal(t, test.expected, expectedT{layout, ok})
 		})
 	}
 }
@@ -192,8 +190,7 @@ func TestInspectAllTimeFormat(t *testing.T) {
 	for id, test := range tests {
 		t.Run(fmt.Sprintf("%v", id), func(t *testing.T) {
 			layout, ok := InspectAllTimeFormat(test.val, test.dateFormat)
-			assert.Equal(t, test.expected.layout, layout)
-			assert.Equal(t, test.expected.ok, ok)
+			assert.Equal(t, test.expected, expectedT{layout, ok})
 		})
 	}
 }
