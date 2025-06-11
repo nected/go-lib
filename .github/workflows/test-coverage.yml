@@ -29,3 +29,6 @@ jobs:
       - name: Output code coverage report
         run: |
           go tool cover -func=coverage.out
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
