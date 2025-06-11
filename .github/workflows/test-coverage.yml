@@ -1,9 +1,9 @@
 name: "Coverage Report"
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 permissions:
   contents: write
 jobs:
@@ -17,11 +17,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      
+
       - name: Install dependencies
         run: |
           go get -t -v ./...
-      
+
       - name: Test with coverage
         run: |
           go test -coverprofile=coverage.out ./...
@@ -29,6 +29,3 @@ jobs:
       - name: Output code coverage report
         run: |
           go tool cover -func=coverage.out
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
