@@ -7,8 +7,8 @@ on:
 permissions:
   contents: write
 jobs:
-  test:
-    name: test
+  unit_tests:
+    name: unit_tests
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -18,7 +18,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: test
-        run: make test
+        run: go test -cover -coverprofile=coverage.txt ./...
       - name: check test coverage
         uses: vladopajic/go-test-coverage@v2
         with:
@@ -32,14 +32,15 @@ jobs:
           path: cover.long.profile
   code_coverage:
     name: "Code coverage report"
-    # if: github.event_name == 'pull_request' # Do not run when workflow is triggered by push to main branch
+    # if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    needs: test # Depends on the artifact uploaded by the "unit_tests" job
+    needs: unit_tests
     permissions:
       contents:      read
-      actions:       read  # to download code coverage results from "test" job
-      pull-requests: write # write permission needed to comment on PR
+      actions:       read
+      pull-requests: write
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - uses: fgrosse/go-coverage-report@v1.2.0 # Consider using a Git revision for maximum security
+      - uses: fgrosse/go-coverage-report@v1.1.1
+        with:
+          coverage-artifact-name: "code-coverage"
+          coverage-file-name: "coverage.txt"

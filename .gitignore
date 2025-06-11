@@ -21,3 +21,4 @@
 go.work
 *.profile
 cover.html
+coverage.txt
