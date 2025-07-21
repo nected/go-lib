@@ -6,6 +6,7 @@ require (
 	github.com/TheZeroSlave/zapsentry v1.20.2
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/golang-module/carbon/v2 v2.4.1
+	github.com/iancoleman/strcase v0.3.0
 	github.com/stretchr/testify v1.9.0
 	go.mongodb.org/mongo-driver v1.17.4
 	go.uber.org/zap v1.27.0
