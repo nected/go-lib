@@ -97,7 +97,8 @@ func processStruct(val reflect.Value, structDefaultValues map[string]any) {
 			}
 		case reflect.Float64, reflect.Float32:
 			if tag != "" {
-				field.SetFloat(field.Float())
+				v, _ := strconv.ParseFloat(tag, 64)
+				field.SetFloat(v)
 			}
 			if dVal != nil {
 				switch actualDVal := dVal.(type) {
