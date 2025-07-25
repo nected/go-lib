@@ -14,49 +14,18 @@ var tagName = "default"
 
 func GenerateDefaults(t any) {
 	val := reflect.ValueOf(t).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		tag := val.Type().Field(i).Tag.Get(tagName)
-		switch field.Kind() {
-		case reflect.String:
-			if tag != "" {
-				field.SetString(tag)
-			}
-		case reflect.Bool:
-			if tag != "" {
-				field.SetBool(strings.ToLower(tag) == "true")
-			}
-		case reflect.Int:
-			if tag != "" {
-				v, _ := strconv.ParseInt(tag, 10, 64)
-				field.SetInt(v)
-			}
-		case reflect.Float64:
-			if tag != "" {
-				v, _ := strconv.ParseFloat(tag, 64)
-				field.SetFloat(v)
-			}
-		case reflect.Int64:
-			if tag != "" {
-				field.SetInt(proccessInt64(tag))
-			}
-		case reflect.Struct:
-			dValue := make(map[string]any)
-			if tag != "" {
-				_ = json.Unmarshal([]byte(tag), &dValue)
-			}
-			processStruct(field, dValue)
-		}
+	if val.IsValid() && val.Kind() == reflect.Struct {
+		processStruct(val, make(map[string]any))
 	}
 }
 
 // recursive function to process nested structs
-func processStruct(val reflect.Value, dValues map[string]any) {
+func processStruct(val reflect.Value, structDefaultValues map[string]any) {
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		structField := val.Type().Field(i)
 		tag := structField.Tag.Get(tagName)
-		dVal := dValues[strcase.ToLowerCamel(structField.Name)]
+		dVal := structDefaultValues[strcase.ToLowerCamel(structField.Name)]
 		switch field.Kind() {
 		case reflect.String:
 			if tag != "" {
@@ -72,6 +41,30 @@ func processStruct(val reflect.Value, dValues map[string]any) {
 			if tag != "" {
 				field.SetBool(strings.ToLower(tag) == "true")
 			}
+			if dVal != nil {
+				switch actualDVal := dVal.(type) {
+				case bool:
+					field.SetBool(actualDVal)
+				}
+			}
+
+		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint:
+			if tag != "" {
+				field.SetInt(field.Int())
+			}
+			if dVal != nil {
+				switch actualDVal := dVal.(type) {
+				case int8:
+					field.SetInt(int64(actualDVal))
+				case int16:
+					field.SetInt(int64(actualDVal))
+				case int32:
+					field.SetInt(int64(actualDVal))
+				case uint:
+					field.SetInt(int64(actualDVal))
+				}
+			}
+
 		case reflect.Int:
 			if tag != "" {
 				field.SetInt(proccessInt64(tag))
@@ -102,15 +95,16 @@ func processStruct(val reflect.Value, dValues map[string]any) {
 					field.SetInt(d.Nanoseconds())
 				}
 			}
-		case reflect.Float64:
+		case reflect.Float64, reflect.Float32:
 			if tag != "" {
-				v, _ := strconv.ParseFloat(tag, 64)
-				field.SetFloat(v)
+				field.SetFloat(field.Float())
 			}
 			if dVal != nil {
 				switch actualDVal := dVal.(type) {
 				case float64:
 					field.SetFloat(actualDVal)
+				case float32:
+					field.SetFloat(float64(actualDVal))
 				}
 			}
 		case reflect.Struct:
