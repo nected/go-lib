@@ -1,6 +1,11 @@
 package generators
 
-import "testing"
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestGenerateDefaults(t *testing.T) {
 	type SubAddress struct {
@@ -35,4 +40,48 @@ func TestGenerateDefaults(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGenerateDefaults2(t *testing.T) {
+	type Timeout struct {
+		Default time.Duration `default:"30s"`
+		Max     time.Duration `default:"60s"`
+	}
+
+	type CustomRetryPolicy struct {
+		InitialInterval    time.Duration `default:"1s"`
+		MaximumInterval    time.Duration `default:"30s"`
+		BackoffCoefficient float64       `default:"10"`
+		MaximumAttempts    int           `default:"2"`
+		Enabled            bool          `default:"true"`
+	}
+
+	type args struct {
+		Duration time.Duration     `default:"10s"`
+		SR       Timeout           `default:"{\"max\":\"10s\"}"`
+		Retry    CustomRetryPolicy `default:"{\"initialInterval\":\"2s\",\"maximumInterval\":\"1s\",\"backoffCoefficient\":4,\"maximumAttempts\":6}"`
+	}
+
+	var defaultArgs args
+	GenerateDefaults(&defaultArgs)
+	checkArgs := args{
+		Duration: 10 * time.Second,
+		SR:       Timeout{Default: 30 * time.Second, Max: 10 * time.Second},
+		Retry: CustomRetryPolicy{
+			InitialInterval:    2 * time.Second,
+			MaximumInterval:    time.Second,
+			BackoffCoefficient: 4,
+			MaximumAttempts:    6,
+			Enabled:            true,
+		},
+	}
+
+	assert.Equal(t, defaultArgs.Duration, checkArgs.Duration)
+	assert.Equal(t, defaultArgs.SR.Max, checkArgs.SR.Max)
+	assert.Equal(t, defaultArgs.SR.Default, checkArgs.SR.Default)
+	assert.Equal(t, defaultArgs.Retry.InitialInterval, checkArgs.Retry.InitialInterval)
+	assert.Equal(t, defaultArgs.Retry.MaximumInterval, checkArgs.Retry.MaximumInterval)
+	assert.Equal(t, defaultArgs.Retry.BackoffCoefficient, checkArgs.Retry.BackoffCoefficient)
+	assert.Equal(t, defaultArgs.Retry.MaximumAttempts, checkArgs.Retry.MaximumAttempts)
+	assert.Equal(t, defaultArgs.Retry.Enabled, checkArgs.Retry.Enabled)
 }

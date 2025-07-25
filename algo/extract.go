@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/nected/go-lib/utils"
 )
 
 const (
@@ -39,21 +37,14 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 			}
 			return nil, nil
 		} else if reflect.TypeOf(source).Kind() == reflect.Map {
-			ok := false
-			//converting source into map
-			var sourceMap map[string]interface{}
-			err := utils.JsonToStruct(source, &sourceMap)
-			if err != nil {
-				return nil, fmt.Errorf("item is not map %v", source)
-			}
-
 			key, indexes, err := extractKeyIndex(itemKeys[i])
 			if err != nil {
 				return nil, err
 			}
+
 			// retrieving item using key
-			source, ok = sourceMap[key]
-			if !ok {
+			source, err = getMapKeyValue(source, key)
+			if err != nil {
 				if MISING_KEY_ERROR {
 					return nil, fmt.Errorf("key %v is not present", itemKeys[i])
 				}
@@ -85,6 +76,38 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 	}
 	return source, nil
 }
+func getMapKeyValue(m interface{}, key string) (interface{}, error) {
+	v := reflect.ValueOf(m)
+	if v.Kind() != reflect.Map {
+		return nil, fmt.Errorf("%v is not a map", v.Kind())
+	}
+	keyValue := reflect.ValueOf(key)
+	mapValue := v.MapIndex(keyValue)
+	if !mapValue.IsValid() {
+		return nil, fmt.Errorf("inavlid value: %v", mapValue)
+	}
+
+	return mapValue.Interface(), nil
+}
+
+func getArrayIndexValue(arr any, idx int, missingKeyError bool) (any, error) {
+	v := reflect.ValueOf(arr)
+	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
+		return nil, fmt.Errorf("%v is not a array", v.Kind())
+	}
+	if v.Len() <= idx {
+		if missingKeyError {
+			return nil, fmt.Errorf("out_of_index")
+		}
+		return nil, nil
+	}
+
+	idxVal := v.Index(idx)
+	if !idxVal.IsValid() {
+		return nil, fmt.Errorf("inavlid value: %v", idxVal)
+	}
+	return idxVal.Interface(), nil
+}
 
 func extractKeyIndex(key string) (string, []int, error) {
 	indexes := make([]int, 0)
@@ -115,26 +138,16 @@ func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) 
 		return nil, fmt.Errorf("source must not be nil")
 	}
 
+	var err error
 	// check if last key is list with index
 	for _, index := range indexes {
-		if reflect.TypeOf(source).Kind() == reflect.Slice ||
-			reflect.TypeOf(source).Kind() == reflect.Array {
-			var sourceArr []interface{}
-			err := utils.JsonToStruct(source, &sourceArr)
+		switch reflect.TypeOf(source).Kind() {
+		case reflect.Slice, reflect.Array:
+			source, err = getArrayIndexValue(source, index, missingKeyError)
 			if err != nil {
-				return nil, fmt.Errorf("item is not list %v", err)
+				return nil, err
 			}
-
-			// if list index doesn't exist
-			if len(sourceArr) <= index {
-				if missingKeyError {
-					return nil, fmt.Errorf("index out of bound %v", index)
-				}
-				return nil, nil
-			}
-			// retrieving item using index
-			source = sourceArr[index]
-		} else if reflect.TypeOf(source).Kind() == reflect.String {
+		case reflect.String:
 			sourceStr := source.(string)
 			if len(sourceStr) <= index {
 				if missingKeyError {
@@ -144,7 +157,7 @@ func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) 
 			}
 			// retrieving item using index
 			source = string(sourceStr[index])
-		} else {
+		default:
 			return nil, fmt.Errorf("inavalid usage of index")
 		}
 	}
