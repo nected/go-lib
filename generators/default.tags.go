@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/iancoleman/strcase"
@@ -20,6 +21,10 @@ func GenerateDefaults(t any) {
 		case reflect.String:
 			if tag != "" {
 				field.SetString(tag)
+			}
+		case reflect.Bool:
+			if tag != "" {
+				field.SetBool(strings.ToLower(tag) == "true")
 			}
 		case reflect.Int:
 			if tag != "" {
@@ -62,6 +67,10 @@ func processStruct(val reflect.Value, dValues map[string]any) {
 				case string:
 					field.SetString(actualDVal)
 				}
+			}
+		case reflect.Bool:
+			if tag != "" {
+				field.SetBool(strings.ToLower(tag) == "true")
 			}
 		case reflect.Int:
 			if tag != "" {

@@ -53,6 +53,7 @@ func TestGenerateDefaults2(t *testing.T) {
 		MaximumInterval    time.Duration `default:"30s"`
 		BackoffCoefficient float64       `default:"10"`
 		MaximumAttempts    int           `default:"2"`
+		Enabled            bool          `default:"true"`
 	}
 
 	type args struct {
@@ -71,6 +72,7 @@ func TestGenerateDefaults2(t *testing.T) {
 			MaximumInterval:    time.Second,
 			BackoffCoefficient: 4,
 			MaximumAttempts:    6,
+			Enabled:            true,
 		},
 	}
 
@@ -81,4 +83,5 @@ func TestGenerateDefaults2(t *testing.T) {
 	assert.Equal(t, defaultArgs.Retry.MaximumInterval, checkArgs.Retry.MaximumInterval)
 	assert.Equal(t, defaultArgs.Retry.BackoffCoefficient, checkArgs.Retry.BackoffCoefficient)
 	assert.Equal(t, defaultArgs.Retry.MaximumAttempts, checkArgs.Retry.MaximumAttempts)
+	assert.Equal(t, defaultArgs.Retry.Enabled, checkArgs.Retry.Enabled)
 }
