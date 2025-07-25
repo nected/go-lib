@@ -50,7 +50,7 @@ func processStruct(val reflect.Value, structDefaultValues map[string]any) {
 
 		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint:
 			if tag != "" {
-				field.SetInt(field.Int())
+				field.SetInt(proccessInt64(tag))
 			}
 			if dVal != nil {
 				switch actualDVal := dVal.(type) {
