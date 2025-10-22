@@ -36,14 +36,16 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 				return nil, fmt.Errorf("source is null for key %v", itemKeys[i])
 			}
 			return nil, nil
-		} else if reflect.TypeOf(source).Kind() == reflect.Map {
+		}
+		switch reflect.TypeOf(source).Kind() {
+		case reflect.Map, reflect.Struct:
 			key, indexes, err := extractKeyIndex(itemKeys[i])
 			if err != nil {
 				return nil, err
 			}
 
 			// retrieving item using key
-			source, err = getMapKeyValue(source, key)
+			source, err = getMapOrStructKeyValue(source, key)
 			if err != nil {
 				if MISING_KEY_ERROR {
 					return nil, fmt.Errorf("key %v is not present", itemKeys[i])
@@ -55,9 +57,7 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 			if err != nil {
 				return nil, err
 			}
-		} else if reflect.TypeOf(source).Kind() == reflect.Slice ||
-			reflect.TypeOf(source).Kind() == reflect.Array ||
-			reflect.TypeOf(source).Kind() == reflect.String {
+		case reflect.Slice, reflect.Array, reflect.String:
 			key, indexes, err := extractKeyIndex(itemKeys[i])
 			if err != nil {
 				return nil, err
@@ -70,24 +70,40 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 			if err != nil {
 				return nil, err
 			}
-		} else {
+		default:
 			return nil, fmt.Errorf("inavlid usage of %v key non map/list", keyStr)
 		}
 	}
 	return source, nil
 }
-func getMapKeyValue(m interface{}, key string) (interface{}, error) {
-	v := reflect.ValueOf(m)
-	if v.Kind() != reflect.Map {
-		return nil, fmt.Errorf("%v is not a map", v.Kind())
-	}
-	keyValue := reflect.ValueOf(key)
-	mapValue := v.MapIndex(keyValue)
-	if !mapValue.IsValid() {
-		return nil, fmt.Errorf("inavlid value: %v", mapValue)
+func getMapOrStructKeyValue(m interface{}, key string) (interface{}, error) {
+	if m == nil {
+		return nil, nil
 	}
 
-	return mapValue.Interface(), nil
+	switch v := reflect.ValueOf(m); v.Kind() {
+	case reflect.Map:
+		keyValue := reflect.ValueOf(key)
+		mapValue := v.MapIndex(keyValue)
+		if !mapValue.IsValid() {
+			return nil, fmt.Errorf("inavlid value: %v", mapValue)
+		}
+		return mapValue.Interface(), nil
+	case reflect.Struct:
+		f := v.FieldByNameFunc(func(s string) bool {
+			return strings.EqualFold(s, key)
+		})
+		if !f.IsValid() {
+			return nil, fmt.Errorf("inavlid value for: %v", key)
+		}
+
+		if f.Kind() == reflect.Ptr && !f.IsNil() {
+			f = f.Elem()
+		}
+		return f.Interface(), nil
+	default:
+		return nil, fmt.Errorf("%v is not a map", v.Kind())
+	}
 }
 
 func getArrayIndexValue(arr any, idx int, missingKeyError bool) (any, error) {
