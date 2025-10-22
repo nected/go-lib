@@ -179,18 +179,3 @@ func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) 
 	}
 	return source, nil
 }
-
-func getField(obj interface{}, name string) (interface{}, bool) {
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	f := v.FieldByNameFunc(func(s string) bool {
-		return strings.EqualFold(s, name)
-	})
-	if !f.IsValid() {
-		return nil, false
-	}
-	return f.Interface(), true
-}
