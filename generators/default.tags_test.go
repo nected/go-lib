@@ -57,16 +57,20 @@ func TestGenerateDefaults2(t *testing.T) {
 	}
 
 	type args struct {
-		Duration time.Duration     `default:"10s"`
-		SR       Timeout           `default:"{\"max\":\"10s\"}"`
-		Retry    CustomRetryPolicy `default:"{\"initialInterval\":\"2s\",\"maximumInterval\":\"1s\",\"backoffCoefficient\":4,\"maximumAttempts\":6}"`
+		Duration    time.Duration     `default:"10s"`
+		SR          Timeout           `default:"{\"max\":\"10s\"}"`
+		ArrayInt    []int             `default:"[1,2,3]"`
+		ArrayStruct []Timeout         `default:"[{\"max\":\"10s\"},{\"default\":\"10s\"}]"`
+		Retry       CustomRetryPolicy `default:"{\"initialInterval\":\"2s\",\"maximumInterval\":\"1s\",\"backoffCoefficient\":4,\"maximumAttempts\":6}"`
 	}
 
 	var defaultArgs args
 	GenerateDefaults(&defaultArgs)
 	checkArgs := args{
-		Duration: 10 * time.Second,
-		SR:       Timeout{Default: 30 * time.Second, Max: 10 * time.Second},
+		Duration:    10 * time.Second,
+		SR:          Timeout{Default: 30 * time.Second, Max: 10 * time.Second},
+		ArrayInt:    []int{1, 2, 3},
+		ArrayStruct: []Timeout{{Default: 30 * time.Second, Max: 10 * time.Second}, {Default: 10 * time.Second, Max: 60 * time.Second}},
 		Retry: CustomRetryPolicy{
 			InitialInterval:    2 * time.Second,
 			MaximumInterval:    time.Second,
@@ -84,4 +88,6 @@ func TestGenerateDefaults2(t *testing.T) {
 	assert.Equal(t, defaultArgs.Retry.BackoffCoefficient, checkArgs.Retry.BackoffCoefficient)
 	assert.Equal(t, defaultArgs.Retry.MaximumAttempts, checkArgs.Retry.MaximumAttempts)
 	assert.Equal(t, defaultArgs.Retry.Enabled, checkArgs.Retry.Enabled)
+	assert.EqualValues(t, defaultArgs.ArrayInt, checkArgs.ArrayInt)
+	assert.EqualValues(t, defaultArgs.ArrayStruct, checkArgs.ArrayStruct)
 }
