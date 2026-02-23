@@ -82,7 +82,7 @@ func proccessField(field reflect.Value, dVal any, tag string) {
 				field.SetBool(actualDVal)
 			}
 		}
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint:
+	case reflect.Int8, reflect.Int16, reflect.Int32:
 		if tag != "" {
 			field.SetInt(proccessInt64(tag))
 		}
@@ -94,8 +94,24 @@ func proccessField(field reflect.Value, dVal any, tag string) {
 				field.SetInt(int64(actualDVal))
 			case int32:
 				field.SetInt(int64(actualDVal))
+			}
+		}
+	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8:
+		if tag != "" {
+			field.SetUint(proccessUint64(tag))
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
 			case uint:
-				field.SetInt(int64(actualDVal))
+				field.SetUint(uint64(actualDVal))
+			case uint8:
+				field.SetUint(uint64(actualDVal))
+			case uint16:
+				field.SetUint(uint64(actualDVal))
+			case uint32:
+				field.SetUint(uint64(actualDVal))
+			case uint64:
+				field.SetUint(uint64(actualDVal))
 			}
 		}
 	case reflect.Int:
@@ -161,5 +177,10 @@ func proccessInt64(tag string) int64 {
 		return d.Nanoseconds()
 	}
 	v, _ := strconv.ParseInt(tag, 10, 64)
+	return v
+}
+
+func proccessUint64(tag string) uint64 {
+	v, _ := strconv.ParseUint(tag, 10, 64)
 	return v
 }
