@@ -413,3 +413,89 @@ func TestGetListIndexValue(t *testing.T) {
 		})
 	}
 }
+
+// UpdateValueToSource mutates a map[string]any by dotted path. Each case
+// declares the starting source, the path+value, the expected error (nil if
+// none), and the expected source state after the call (nil = skip check,
+// e.g. when source itself is nil or not a map).
+func TestUpdateValueToSource(t *testing.T) {
+	tests := []struct {
+		name       string
+		source     any
+		path       string
+		value      any
+		wantErr    error
+		wantSource any
+	}{
+		{
+			// empty path leaves source untouched and returns no error
+			name:       "empty path is no-op",
+			source:     map[string]interface{}{"a": 1},
+			path:       "",
+			value:      "new",
+			wantSource: map[string]interface{}{"a": 1},
+		},
+		{
+			// nil source is rejected before any traversal
+			name:    "nil source returns error",
+			source:  nil,
+			path:    "a",
+			value:   "new",
+			wantErr: fmt.Errorf("source must not be null"),
+		},
+		{
+			// only map[string]interface{} is supported as a source
+			name:    "non-map source returns error",
+			source:  []int{1, 2},
+			path:    "a",
+			value:   "new",
+			wantErr: fmt.Errorf("source should be map"),
+		},
+		{
+			// single-segment path updates the matching top-level key
+			name:       "top-level key update",
+			source:     map[string]interface{}{"name": "old", "age": 10},
+			path:       "name",
+			value:      "new",
+			wantSource: map[string]interface{}{"name": "new", "age": 10},
+		},
+		{
+			// multi-segment path recurses into a nested map and updates the leaf
+			name: "nested key update",
+			source: map[string]interface{}{
+				"user": map[string]interface{}{"name": "old", "age": 10},
+			},
+			path:  "user.name",
+			value: "new",
+			wantSource: map[string]interface{}{
+				"user": map[string]interface{}{"name": "new", "age": 10},
+			},
+		},
+		{
+			// missing top-level key is a silent no-op (no error, no insert)
+			name:       "unknown top-level key is silent no-op",
+			source:     map[string]interface{}{"a": 1},
+			path:       "missing",
+			value:      "new",
+			wantSource: map[string]interface{}{"a": 1},
+		},
+		{
+			// intermediate path segment must itself be a map; other types error
+			name:    "nested intermediate is not a map returns error",
+			source:  map[string]interface{}{"user": "plain-string"},
+			path:    "user.name",
+			value:   "new",
+			wantErr: fmt.Errorf("unsupported value update user.name"),
+		},
+	}
+
+	for id, test := range tests {
+		t.Run(fmt.Sprintf("%v_%s", id, test.name), func(t *testing.T) {
+			err := UpdateValueToSource(test.source, test.path, test.value)
+			assert.Equal(t, test.wantErr, err)
+			if test.wantSource != nil {
+				assert.Equal(t, test.wantSource, test.source)
+			}
+		})
+	}
+}

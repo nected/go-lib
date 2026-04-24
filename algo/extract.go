@@ -193,3 +193,35 @@ func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) 
 	}
 	return source, nil
 }
+
+func UpdateValueToSource(source interface{}, path string, value interface{}) error {
+	if path == "" {
+		return nil
+	}
+
+	if source == nil {
+		return fmt.Errorf("source must not be null")
+	}
+
+	srcMap, ok := source.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("source should be map")
+	}
+
+	sPath := strings.Split(path, ".")
+	for k, v := range srcMap {
+		if k == sPath[0] {
+			if len(sPath) == 1 {
+				srcMap[k] = value
+				return nil
+			}
+			switch actualV := v.(type) {
+			case map[string]interface{}:
+				return UpdateValueToSource(actualV, strings.Join(sPath[1:], "."), value)
+			default:
+				return fmt.Errorf("unsupported value update %v", path)
+			}
+		}
+	}
+	return nil
+}
