@@ -1,6 +1,8 @@
 package algo
 
 import (
+	"encoding/base64"
+
 	"github.com/sqids/sqids-go"
 )
 
@@ -28,4 +30,13 @@ func DecodeHash(hash string) *uint64 {
 		return nil
 	}
 	return &s.Decode(hash)[0]
+}
+
+func Encode(planData string) string {
+	return base64.StdEncoding.EncodeToString([]byte(planData))
+}
+
+func Decode(encodeData string) (string, error) {
+	data, err := base64.StdEncoding.DecodeString(encodeData)
+	return string(data), err
 }

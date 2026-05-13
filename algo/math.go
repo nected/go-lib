@@ -1,5 +1,10 @@
 package algo
 
+import (
+	"crypto/rand"
+	"encoding/base64"
+)
+
 func MAX(a, b int) int {
 	if a > b {
 		return a
@@ -67,4 +72,14 @@ func RemoveDuplicate[T comparable](sliceList []T) []T {
 		}
 	}
 	return list
+}
+
+// GenerateRandomString returns a URL-safe, base64 encoded
+func GenerateRandomString(strLen int) (string, error) {
+	b := make([]byte, strLen)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
 }

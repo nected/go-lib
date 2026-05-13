@@ -6,11 +6,14 @@ import (
 	"crypto/rand"
 
 	"github.com/nected/go-lib/crypto/base64"
+	cryptoerrors "github.com/nected/go-lib/crypto/errors"
 	"github.com/nected/go-lib/crypto/models"
 )
 
 func Encrypt(secret string, data []byte) (*models.Payload, error) {
 	if len(data) == 0 {
+		// TODO: return cryptoerrors.ErrEmptyData instead of (nil, nil) so
+		// callers can distinguish empty input from a lost result.
 		return nil, nil
 	}
 	block, err := aes.NewCipher([]byte(secret))
@@ -45,6 +48,8 @@ func Encrypt(secret string, data []byte) (*models.Payload, error) {
 func Decrypt(secret string, data string) (*models.Payload, error) {
 	p := models.Payload{}
 	if data == "" {
+		// TODO: return cryptoerrors.ErrEmptyData instead of (nil, nil) so
+		// callers can distinguish empty input from a lost result.
 		return nil, nil
 	}
 
@@ -60,14 +65,13 @@ func Decrypt(secret string, data string) (*models.Payload, error) {
 	}
 
 	gcm, err := cipher.NewGCM(block)
-
 	if err != nil {
 		return nil, err
 	}
 
 	nonceSize := gcm.NonceSize()
 	if len(decodedData) < nonceSize {
-		return nil, err
+		return nil, cryptoerrors.ErrInvalidData
 	}
 
 	nonce, encryptedData := decodedData[:nonceSize], decodedData[nonceSize:]

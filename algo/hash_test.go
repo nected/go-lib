@@ -71,3 +71,62 @@ func TestDecodeHash(t *testing.T) {
 		}
 	})
 }
+
+// Encode wraps stdlib base64 encoding. Round-trip with Decode is the most
+// useful check; an explicit fixture pins the encoding scheme (StdEncoding,
+// not URLEncoding) so a swap would fail the test.
+func TestEncode(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{name: "empty string", input: "", want: ""},
+		{name: "ascii", input: "hello", want: "aGVsbG8="},
+		// Bytes that differ between Std and URL encoding (`+/` vs `-_`) — pins
+		// the StdEncoding choice in the source.
+		{name: "std-vs-url discriminator bytes", input: "\xfb\xff", want: "+/8="},
+	}
+	for id, test := range tests {
+		t.Run(fmt.Sprintf("%v_%s", id, test.name), func(t *testing.T) {
+			assert.Equal(t, test.want, Encode(test.input))
+		})
+	}
+}
+
+// Decode inverts Encode and returns base64's error verbatim on malformed input.
+func TestDecode(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{name: "empty string", input: "", want: ""},
+		{name: "valid ascii", input: "aGVsbG8=", want: "hello"},
+		// '!' is not a valid base64 character — surfaces a CorruptInputError.
+		{name: "invalid characters", input: "not_base64!", wantErr: true},
+		// Length not a multiple of 4 and missing padding — also a CorruptInputError.
+		{name: "bad padding", input: "abc", wantErr: true},
+	}
+	for id, test := range tests {
+		t.Run(fmt.Sprintf("%v_%s", id, test.name), func(t *testing.T) {
+			got, err := Decode(test.input)
+			if test.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, test.want, got)
+		})
+	}
+
+	// Round-trip across a few payloads, including non-ASCII bytes.
+	t.Run("round trip", func(t *testing.T) {
+		for _, s := range []string{"", "hello", "with spaces & symbols!", "日本語"} {
+			got, err := Decode(Encode(s))
+			assert.NoError(t, err)
+			assert.Equal(t, s, got)
+		}
+	})
+}

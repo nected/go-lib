@@ -148,6 +148,45 @@ func TestAminusB(t *testing.T) {
 	}
 }
 
+// GenerateRandomString reads crypto/rand and URL-base64-encodes the bytes.
+// The encoded length is the deterministic ceil(strLen/3)*4, and two successive
+// calls with the same length must differ (sanity check on randomness).
+func TestGenerateRandomString(t *testing.T) {
+	tests := []struct {
+		name      string
+		strLen    int
+		wantLen   int
+		wantEmpty bool
+	}{
+		{name: "len 0 returns empty", strLen: 0, wantLen: 0, wantEmpty: true},
+		// 16 raw bytes -> ceil(16/3)*4 = 24 base64 chars (with padding).
+		{name: "len 16", strLen: 16, wantLen: 24},
+		// 32 raw bytes -> 44 base64 chars.
+		{name: "len 32", strLen: 32, wantLen: 44},
+	}
+	for id, test := range tests {
+		t.Run(fmt.Sprintf("%v_%s", id, test.name), func(t *testing.T) {
+			got, err := GenerateRandomString(test.strLen)
+			assert.NoError(t, err)
+			if test.wantEmpty {
+				assert.Empty(t, got)
+				return
+			}
+			assert.Equal(t, test.wantLen, len(got))
+		})
+	}
+
+	// Two successive calls must produce different outputs — the chance of
+	// collision on 16 random bytes is negligible.
+	t.Run("two calls differ", func(t *testing.T) {
+		a, err1 := GenerateRandomString(16)
+		b, err2 := GenerateRandomString(16)
+		assert.NoError(t, err1)
+		assert.NoError(t, err2)
+		assert.NotEqual(t, a, b)
+	})
+}
+
 // RemoveDuplicate preserves first-seen order. Unlike Intersect / AminusB it
 // initializes `list` to an empty slice, so an empty input returns []int{} not nil.
 func TestRemoveDuplicate(t *testing.T) {

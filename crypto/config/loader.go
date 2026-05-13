@@ -31,6 +31,9 @@ func LoadKeysFromFile(keyName, keyPath string) error {
 		Version: version,
 	}
 
+	if _, ok := info.AvailableKeys[keyName]; !ok {
+		info.AvailableKeys[keyName] = make(map[int]models.KeyInfo)
+	}
 	info.AvailableKeys[keyName][keyInfo.Version] = keyInfo
 	return nil
 }
