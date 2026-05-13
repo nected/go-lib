@@ -10,6 +10,20 @@ import (
 
 const (
 	ERROR_MISSING_KEY_VALUE = "error"
+
+	errSourceNullForKey   = "unable to read '%v': source is empty"
+	errKeyNotPresent      = "key '%v' not found"
+	errKeyUsedOnListItem  = "cannot use field name on a list value: '%v'"
+	errInvalidKeyUsage    = "cannot access '%v' on a non-object value"
+	errInvalidValue       = "invalid value: %v"
+	errInvalidValueForKey = "invalid value for field '%v'"
+	errNotAMap            = "expected an object, got %v"
+	errNotAnArray         = "expected a list, got %v"
+	errOutOfIndex         = "index out of range"
+	errInvalidIndexInKey  = "invalid index in key '%v'"
+	errSourceMustNotBeNil = "source cannot be empty"
+	errIndexOutOfBound    = "index %v is out of range"
+	errInvalidIndexUsage  = "cannot use index on this value"
 )
 
 var listIndexRegexMatcher = regexp.MustCompile(`^([\w-]*)(\[([0-9]+)\])+$`)
@@ -33,7 +47,7 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 	for i := 0; i < len(itemKeys); i++ {
 		if source == nil {
 			if MISING_KEY_ERROR {
-				return nil, fmt.Errorf("source is null for key %v", itemKeys[i])
+				return nil, fmt.Errorf(errSourceNullForKey, itemKeys[i])
 			}
 			return nil, nil
 		}
@@ -48,7 +62,7 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 			source, err = getMapOrStructKeyValue(source, key)
 			if err != nil {
 				if MISING_KEY_ERROR {
-					return nil, fmt.Errorf("key %v is not present", itemKeys[i])
+					return nil, fmt.Errorf(errKeyNotPresent, itemKeys[i])
 				}
 				return nil, nil
 			}
@@ -63,7 +77,7 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 				return nil, err
 			}
 			if key != "" {
-				return nil, fmt.Errorf("key used on list item %v", keyStr)
+				return nil, fmt.Errorf(errKeyUsedOnListItem, keyStr)
 			}
 			// retrieving index if present in key
 			source, err = getListIndexValue(source, indexes, MISING_KEY_ERROR)
@@ -71,7 +85,7 @@ func GetValFromSource(source interface{}, keyStr string, options ...string) (int
 				return nil, err
 			}
 		default:
-			return nil, fmt.Errorf("inavlid usage of %v key non map/list", keyStr)
+			return nil, fmt.Errorf(errInvalidKeyUsage, keyStr)
 		}
 	}
 	return source, nil
@@ -86,7 +100,7 @@ func getMapOrStructKeyValue(m interface{}, key string) (interface{}, error) {
 		keyValue := reflect.ValueOf(key)
 		mapValue := v.MapIndex(keyValue)
 		if !mapValue.IsValid() {
-			return nil, fmt.Errorf("inavlid value: %v", mapValue)
+			return nil, fmt.Errorf(errInvalidValue, mapValue)
 		}
 		return mapValue.Interface(), nil
 	case reflect.Struct:
@@ -94,7 +108,7 @@ func getMapOrStructKeyValue(m interface{}, key string) (interface{}, error) {
 			return strings.EqualFold(s, key)
 		})
 		if !f.IsValid() {
-			return nil, fmt.Errorf("inavlid value for: %v", key)
+			return nil, fmt.Errorf(errInvalidValueForKey, key)
 		}
 
 		if f.Kind() == reflect.Ptr && !f.IsNil() {
@@ -102,25 +116,25 @@ func getMapOrStructKeyValue(m interface{}, key string) (interface{}, error) {
 		}
 		return f.Interface(), nil
 	default:
-		return nil, fmt.Errorf("%v is not a map", v.Kind())
+		return nil, fmt.Errorf(errNotAMap, v.Kind())
 	}
 }
 
 func getArrayIndexValue(arr any, idx int, missingKeyError bool) (any, error) {
 	v := reflect.ValueOf(arr)
 	if v.Kind() != reflect.Slice && v.Kind() != reflect.Array {
-		return nil, fmt.Errorf("%v is not a array", v.Kind())
+		return nil, fmt.Errorf(errNotAnArray, v.Kind())
 	}
 	if v.Len() <= idx {
 		if missingKeyError {
-			return nil, fmt.Errorf("out_of_index")
+			return nil, fmt.Errorf(errOutOfIndex)
 		}
 		return nil, nil
 	}
 
 	idxVal := v.Index(idx)
 	if !idxVal.IsValid() {
-		return nil, fmt.Errorf("inavlid value: %v", idxVal)
+		return nil, fmt.Errorf(errInvalidValue, idxVal)
 	}
 	return idxVal.Interface(), nil
 }
@@ -138,7 +152,7 @@ func extractKeyIndex(key string) (string, []int, error) {
 			for j := 1; j < len(keyArr); j++ {
 				ind, err := strconv.Atoi(keyArr[j])
 				if err != nil {
-					return "", nil, fmt.Errorf("inavlid index in the key %v", key)
+					return "", nil, fmt.Errorf(errInvalidIndexInKey, key)
 				}
 				indexes = append(indexes, ind)
 			}
@@ -151,7 +165,7 @@ func extractKeyIndex(key string) (string, []int, error) {
 
 func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) (interface{}, error) {
 	if len(indexes) > 0 && source == nil {
-		return nil, fmt.Errorf("source must not be nil")
+		return nil, fmt.Errorf(errSourceMustNotBeNil)
 	}
 
 	var err error
@@ -167,15 +181,47 @@ func getListIndexValue(source interface{}, indexes []int, missingKeyError bool) 
 			sourceStr := source.(string)
 			if len(sourceStr) <= index {
 				if missingKeyError {
-					return nil, fmt.Errorf("index out of bound %v", index)
+					return nil, fmt.Errorf(errIndexOutOfBound, index)
 				}
 				return nil, nil
 			}
 			// retrieving item using index
 			source = string(sourceStr[index])
 		default:
-			return nil, fmt.Errorf("inavalid usage of index")
+			return nil, fmt.Errorf(errInvalidIndexUsage)
 		}
 	}
 	return source, nil
+}
+
+func UpdateValueToSource(source interface{}, path string, value interface{}) error {
+	if path == "" {
+		return nil
+	}
+
+	if source == nil {
+		return fmt.Errorf("source must not be null")
+	}
+
+	srcMap, ok := source.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("source should be map")
+	}
+
+	sPath := strings.Split(path, ".")
+	for k, v := range srcMap {
+		if k == sPath[0] {
+			if len(sPath) == 1 {
+				srcMap[k] = value
+				return nil
+			}
+			switch actualV := v.(type) {
+			case map[string]interface{}:
+				return UpdateValueToSource(actualV, strings.Join(sPath[1:], "."), value)
+			default:
+				return fmt.Errorf("unsupported value update %v", path)
+			}
+		}
+	}
+	return nil
 }

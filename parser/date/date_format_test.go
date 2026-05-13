@@ -209,12 +209,37 @@ func TestGetAllTimeLayout(t *testing.T) {
 		{
 			dateFormat: US_DATE_FORMAT, expected: append(usDateLayouts, usDatetimeLayouts...),
 		},
+		{
+			// Unknown DateFormatEnum value falls through to the default branch
+			// and yields an empty slice rather than nil.
+			dateFormat: DateFormatEnum("unknown"), expected: []DateLayout{},
+		},
 	}
 
 	for id, test := range tests {
 		t.Run(fmt.Sprintf("%v", id), func(t *testing.T) {
 			layouts := GetAllTimeLayout(test.dateFormat)
 			assert.Equal(t, test.expected, layouts)
+		})
+	}
+}
+
+// DateFormatEnum.String is a trivial cast. Cover all three named values plus
+// a custom value so future renames or wrapping shows up immediately.
+func TestDateFormatEnumString(t *testing.T) {
+	tests := []struct {
+		name string
+		in   DateFormatEnum
+		want string
+	}{
+		{name: "empty", in: EMPTY_FORMAT, want: ""},
+		{name: "in", in: IN_DATE_FORMAT, want: "in"},
+		{name: "us", in: US_DATE_FORMAT, want: "us"},
+		{name: "custom passthrough", in: DateFormatEnum("custom"), want: "custom"},
+	}
+	for id, test := range tests {
+		t.Run(fmt.Sprintf("%v_%s", id, test.name), func(t *testing.T) {
+			assert.Equal(t, test.want, test.in.String())
 		})
 	}
 }

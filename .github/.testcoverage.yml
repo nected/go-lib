@@ -3,22 +3,9 @@
 profile: coverage.out
 local-prefix: "github.com/nected/go-lib"
 threshold:
-  file: 60
-  package: 70
-  total: 75
-override:
-  - threshold: 0
-    path: logger/options.go$
-  - threshold: 30
-    path: logger/logger.go$
-  - threshold: 40
-    path: crypto/crypto.go$
-  - threshold: 28
-    path: ^logger$
-  - threshold: 60
-    path: ^crypto/config$
-  - threshold: 40
-    path: ^crypto$
+  file: 80
+  package: 90
+  total: 95
 
 exclude:
   paths:

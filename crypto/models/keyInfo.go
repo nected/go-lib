@@ -112,9 +112,13 @@ func GetEncryptionKey(keyName string, version int) *KeyInfo {
 		return nil
 	}
 	if version > 0 {
-		keyInfo := keyInfoVersionMap[version]
+		keyInfo, ok := keyInfoVersionMap[version]
+		if !ok {
+			return nil
+		}
 		return &keyInfo
 	}
+
 	var latestKeyInfo *KeyInfo
 	for _, keyInfo := range keyInfoVersionMap {
 		if latestKeyInfo == nil {

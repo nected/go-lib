@@ -62,8 +62,8 @@ func (s DateLayout) String() string {
 	return string(s)
 }
 
-func InspectDateFormat(val string, dateFromat DateFormatEnum) (DateLayout, bool) {
-	switch dateFromat {
+func InspectDateFormat(val string, dateFormat DateFormatEnum) (DateLayout, bool) {
+	switch dateFormat {
 	case EMPTY_FORMAT, IN_DATE_FORMAT:
 		for _, layout := range inDateLayouts {
 			if _, err := time.Parse(layout.String(), val); err == nil {

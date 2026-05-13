@@ -6,6 +6,7 @@ on:
     branches: ["main"]
 permissions:
   contents: write
+  pull-requests: write
 jobs:
   test:
     name: test
@@ -29,3 +30,33 @@ jobs:
       - name: Output code coverage report
         run: |
           go tool cover -func=coverage.out
+
+      - name: Check test coverage
+        id: coverage
+        uses: vladopajic/go-test-coverage@v2
+        continue-on-error: true
+        with:
+          config: ./.github/.testcoverage.yml
+          git-token: ${{ github.ref_name == 'main' && secrets.GITHUB_TOKEN || '' }}
+          git-branch: badges
+
+      - name: Post coverage report to PR
+        if: github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          comment-tag: coverage-report
+          message: |
+            ## Test Coverage Report
+
+            ```
+            ${{ fromJSON(steps.coverage.outputs.report) }}
+            ```
+
+            Status: **${{ steps.coverage.outcome == 'success' && 'Passed ✅' || 'Failed ❌' }}**
+
+      - name: Fail if coverage threshold not met
+        if: steps.coverage.outcome == 'failure'
+        run: |
+          echo "Coverage check failed"
+          exit 1
