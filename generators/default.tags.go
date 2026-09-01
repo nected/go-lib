@@ -26,94 +26,147 @@ func processStruct(val reflect.Value, structDefaultValues map[string]any) {
 		structField := val.Type().Field(i)
 		tag := structField.Tag.Get(tagName)
 		dVal := structDefaultValues[strcase.ToLowerCamel(structField.Name)]
-		switch field.Kind() {
-		case reflect.String:
-			if tag != "" {
-				field.SetString(tag)
-			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case string:
-					field.SetString(actualDVal)
-				}
-			}
-		case reflect.Bool:
-			if tag != "" {
-				field.SetBool(strings.ToLower(tag) == "true")
-			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case bool:
-					field.SetBool(actualDVal)
-				}
-			}
+		proccessField(field, dVal, tag)
+	}
+}
 
-		case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint:
-			if tag != "" {
-				field.SetInt(proccessInt64(tag))
+// function to proccess array
+func proccessArray(field reflect.Value, defaultValues []any) {
+	if !field.IsZero() {
+		return
+	}
+	innerField := field.Type().Elem()
+	switch innerField.Kind() {
+	case reflect.Struct:
+		sliceValues := make([]reflect.Value, 0)
+		for _, v := range defaultValues {
+			dValMap, ok := v.(map[string]any)
+			if !ok {
+				continue
 			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case int8:
-					field.SetInt(int64(actualDVal))
-				case int16:
-					field.SetInt(int64(actualDVal))
-				case int32:
-					field.SetInt(int64(actualDVal))
-				case uint:
-					field.SetInt(int64(actualDVal))
-				}
-			}
+			newElem := reflect.New(innerField).Elem()
+			processStruct(newElem, dValMap)
+			sliceValues = append(sliceValues, newElem)
+		}
+		field.Set(reflect.Append(field, sliceValues...))
+	default:
+		sliceValues := make([]reflect.Value, 0)
+		for _, v := range defaultValues {
+			newElem := reflect.New(innerField).Elem()
+			proccessField(newElem, v, "")
+			sliceValues = append(sliceValues, newElem)
+		}
+		field.Set(reflect.Append(field, sliceValues...))
+	}
+}
 
-		case reflect.Int:
-			if tag != "" {
-				field.SetInt(proccessInt64(tag))
+func proccessField(field reflect.Value, dVal any, tag string) {
+	switch field.Kind() {
+	case reflect.String:
+		if tag != "" {
+			field.SetString(tag)
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case string:
+				field.SetString(actualDVal)
 			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case int:
-					field.SetInt(int64(actualDVal))
-				case float64:
-					field.SetInt(int64(actualDVal))
-				}
+		}
+	case reflect.Bool:
+		if tag != "" {
+			field.SetBool(strings.ToLower(tag) == "true")
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case bool:
+				field.SetBool(actualDVal)
 			}
-
-		case reflect.Int64:
-			if tag != "" {
-				field.SetInt(proccessInt64(tag))
+		}
+	case reflect.Int8, reflect.Int16, reflect.Int32:
+		if tag != "" {
+			field.SetInt(proccessInt64(tag))
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case int8:
+				field.SetInt(int64(actualDVal))
+			case int16:
+				field.SetInt(int64(actualDVal))
+			case int32:
+				field.SetInt(int64(actualDVal))
 			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case int:
-					field.SetInt(int64(actualDVal))
-				case int64:
-					field.SetInt(int64(actualDVal))
-				case float64:
-					field.SetInt(int64(actualDVal))
-				case string:
-					d, _ := time.ParseDuration(actualDVal)
-					field.SetInt(d.Nanoseconds())
-				}
+		}
+	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8:
+		if tag != "" {
+			field.SetUint(proccessUint64(tag))
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case uint:
+				field.SetUint(uint64(actualDVal))
+			case uint8:
+				field.SetUint(uint64(actualDVal))
+			case uint16:
+				field.SetUint(uint64(actualDVal))
+			case uint32:
+				field.SetUint(uint64(actualDVal))
+			case uint64:
+				field.SetUint(uint64(actualDVal))
 			}
-		case reflect.Float64, reflect.Float32:
-			if tag != "" {
-				v, _ := strconv.ParseFloat(tag, 64)
-				field.SetFloat(v)
+		}
+	case reflect.Int:
+		if tag != "" {
+			field.SetInt(proccessInt64(tag))
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case int:
+				field.SetInt(int64(actualDVal))
+			case float64:
+				field.SetInt(int64(actualDVal))
 			}
-			if dVal != nil {
-				switch actualDVal := dVal.(type) {
-				case float64:
-					field.SetFloat(actualDVal)
-				case float32:
-					field.SetFloat(float64(actualDVal))
-				}
+		}
+	case reflect.Int64:
+		if tag != "" {
+			field.SetInt(proccessInt64(tag))
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case int:
+				field.SetInt(int64(actualDVal))
+			case int64:
+				field.SetInt(int64(actualDVal))
+			case float64:
+				field.SetInt(int64(actualDVal))
+			case string:
+				d, _ := time.ParseDuration(actualDVal)
+				field.SetInt(d.Nanoseconds())
 			}
-		case reflect.Struct:
-			dValue := make(map[string]any)
-			if tag != "" {
-				_ = json.Unmarshal([]byte(tag), &dValue)
+		}
+	case reflect.Float64, reflect.Float32:
+		if tag != "" {
+			v, _ := strconv.ParseFloat(tag, 64)
+			field.SetFloat(v)
+		}
+		if dVal != nil {
+			switch actualDVal := dVal.(type) {
+			case float64:
+				field.SetFloat(actualDVal)
+			case float32:
+				field.SetFloat(float64(actualDVal))
 			}
-			processStruct(field, dValue)
+		}
+	case reflect.Struct:
+		dValue := make(map[string]any)
+		if tag != "" {
+			_ = json.Unmarshal([]byte(tag), &dValue)
+		}
+		processStruct(field, dValue)
+	case reflect.Array, reflect.Slice:
+		if field.IsZero() && tag != "" {
+			dVal := make([]any, 0)
+			_ = json.Unmarshal([]byte(tag), &dVal)
+			proccessArray(field, dVal)
 		}
 	}
 }
@@ -124,5 +177,10 @@ func proccessInt64(tag string) int64 {
 		return d.Nanoseconds()
 	}
 	v, _ := strconv.ParseInt(tag, 10, 64)
+	return v
+}
+
+func proccessUint64(tag string) uint64 {
+	v, _ := strconv.ParseUint(tag, 10, 64)
 	return v
 }
